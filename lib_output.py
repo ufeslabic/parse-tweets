@@ -49,3 +49,9 @@ def top_something_to_csv(dict_in, filename, column_titles, reverse, sort_key, va
 			file_writer.writerow([item[0], item[1]])
 		csvfile.close()
 
+# returns error message with the corrupted line and exits the program
+def error_parsing(line_num):
+	print("Erro na linha: "+ str(line_num))	
+	print("Erro: Nem todos tweets foram parseados. Encerrando...")
+	sys.exit()
+
