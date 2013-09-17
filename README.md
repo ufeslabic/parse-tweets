@@ -10,8 +10,8 @@ After the tweets are archived, you can dump then in some formats. This script sp
 ------------------
 Requirements:
 ------------------
-Linux
-Python 3.2+
+* Linux
+* Python 3.3
 
 ------------------
 Usage:
@@ -19,10 +19,10 @@ Usage:
 * Download the files
 * Put the files and the tweets exported from your twapper keeper on the same folder
 * Rename the file exported from ytk to "tweets.csv"
-* invoke the script on a shell in this folder;
+* call the script on a shell in this folder;
 
-Example using python3.2
-python3.2 parse_tweets.py
+Example:
+python3.3 parse_tweets.py
 
 ------------------
 Results
@@ -38,6 +38,12 @@ Some pipe delimited csv's:
 * urls.csv: 		urls with the number of distinct users that mentioned it
 
 * locations.csv: 	geo coords of the tweets. The number is significantly smaller than the whole dataset because a very small number of tweets have geographical data.
+
+* users_activity.csv: contains the number of tweets per user
+
+* mentions.csv: most mentioned profiles
+
+* words_per_period: table with a timeline of the top 10(default) words in a given dataset
 
 Two txt's to be used with Wordle(http://www.wordle.net/create) or Tagxedo to generate and customize your wordclouds:
 

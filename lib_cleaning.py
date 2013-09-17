@@ -14,8 +14,6 @@ weird_characters.add('‘')
 weird_characters.add('…')
 
 # remove punctuaction signs
-def remove_punctuaction(word):	
-	hashtag = ''.join(character for character in word if character not in weird_characters)
-	hashtag = hashtag.replace(" ","")	
-	return hashtag.replace('”','')
-
+def remove_punctuation(word):	
+	word = ''.join(character for character in word if character not in weird_characters)
+	return word

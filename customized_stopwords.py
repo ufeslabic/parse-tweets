@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# Feel free to add more words here
 portuguese_common_words = ["o", "a", "os", "as", "ao", "aos", "de", "do", "da", "dos", "das",
 "eu", "me", "mim", "meu", "minha","seu","sua","dele","dela","ele","ela","eles", "elas"
 "lhe","se", "pra", "um", "uma", 
@@ -16,12 +17,12 @@ portuguese_common_words = ["o", "a", "os", "as", "ao", "aos", "de", "do", "da", 
 "ja", "já", "jah", 
 "só", "soh", 
 "lá", "la", "lah", 
-"se", 
+"se",
 "até", "ateh", 
 "ta", "tá", "tah", 
 "diz","fala",
 "via", "rt",
-"á", "à", 
+"á", "à", "são", "vão", "vai"
 "não", "naum", "nao", 
 "está", "estah", "esta",
 "mas", "mais"]
