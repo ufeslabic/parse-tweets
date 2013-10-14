@@ -35,13 +35,15 @@ Some pipe delimited csv's:
 
 * hashtags.csv: 	number of users using the hashtags;
 
-* urls.csv: 		urls with the number of distinct users that mentioned it
-
 * locations.csv: 	geo coords of the tweets. The number is significantly smaller than the whole dataset because a very small number of tweets have geographical data.
 
-* users_activity.csv: contains the number of tweets per user
-
 * mentions.csv: most mentioned profiles
+
+* top_tweets.csv: top tweets sorted by number of RT's
+
+* urls.csv: urls with the number of distinct users that mentioned it
+
+* users_activity.csv: contains the number of tweets per user
 
 * words_per_period: table with a timeline of the top 10(default) words in a given dataset
 

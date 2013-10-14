@@ -25,3 +25,8 @@ def options_parser(argv):
 # tweets_FIXED.csv is the file is that will be used by the script
 def remove_null_byte():
 	subprocess.call(["sh", "remove_null_byte.sh"])
+
+# calls a bash script to remove the tweets_FIXED.csv 
+# and moves the results to the results folder
+def cleanup():
+	subprocess.call(["sh", "cleanup.sh"])
