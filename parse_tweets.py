@@ -7,6 +7,13 @@ from lib_output import *
 from lib_input import *
 from lib_time import *
 
+# adds a date to the dates dictionary and the username that tweeeted it
+# if it's the first time date occurs, it is inserted with only this username
+def count_users_by_date(users_by_date, normal_format_date, username):
+	try:
+		users_by_date[normal_format_date].add(username)
+	except KeyError:
+		users_by_date[normal_format_date] = set([username])
 
 # adds a word to the dictionary of words and increment it's count
 # if it's the first time this word is mentioned, it is inserted with count = 1
@@ -89,6 +96,10 @@ def main(input_file='tweets_FIXED.csv', delimiter='|', output_type='csv'):
 	users_position = {}
 	# entry example: 'random_Person' => (latitude,longitude)
 
+	# dictionary of distinct usernamess by date
+	users_by_date = {}
+	# entry example: '04/05/2013' => ['ronaLDO', 'Rivaldo', 'RobertoCarlos_']
+
 	# dictionary of users where each entry contains their geo-coordinates, up to one per user
 	users = defaultdict(int)
 	# entry example: 'random_Person' => (latitude,longitude)
@@ -124,6 +135,8 @@ def main(input_file='tweets_FIXED.csv', delimiter='|', output_type='csv'):
 				try:					
 					timestamp = line[12]
 					if timestamp:
+						normal_format_date = datetime.datetime.fromtimestamp(int(timestamp)).strftime('%d/%m/%Y')
+						count_users_by_date(users_by_date, normal_format_date, username)
 						dates[datetime.datetime.fromtimestamp(int(timestamp)).strftime('%d/%m/%Y')] += 1
 						timestamp = datetime.datetime.fromtimestamp(int(timestamp))
 						timestamp_list.append(timestamp)
@@ -155,6 +168,7 @@ def main(input_file='tweets_FIXED.csv', delimiter='|', output_type='csv'):
 	locations_to_csv(users_position)
 
 	top_something_to_csv(urls, 'urls.csv', ['urls', 'distinct_users'], True, sort_key=lambda t: t[1], value_format=lambda t: len(t))
+	top_something_to_csv(users_by_date, 'users_by_date.csv', ['date', 'distinct_users'], reverse=False, sort_key=lambda t:(t[0:2], t[3:5], t[6:8]), value_format=lambda t: len(t))
 	top_something_to_csv(dates, 'dates.csv', ['date', 'number_of_tweets'], reverse=False, sort_key=lambda t: datetime.date(int(t[0][6:]), int(t[0][3:5]), int(t[0][:2])))
 	top_something_to_csv(hashtags, 'hashtags.csv', ['hashtags', 'distinct_users_commenting'], True, sort_key=lambda t: t[1], value_format=lambda t:t)
 	top_something_to_csv(mentions, 'mentions.csv', ['mentions', 'distinct_users_mentioning'], True, sort_key=lambda t: t[1], value_format=lambda t:t)
