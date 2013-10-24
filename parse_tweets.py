@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import csv, sys
 from collections import defaultdict
+from hashtags_network import *
 from lib_cleaning import *
 from lib_output import *
 from lib_input import *
@@ -62,7 +63,8 @@ def handle_mentions(profile_name, mentions, username):
 		mentions[profile_name] = set([username])
 
 # reads the words in the tweet and decides what to do with them		
-def read_tweet_text(tweet_text, username, words, urls, hashtags, mentions, words_per_time, timestamp):	
+def read_tweet_text(tweet_text, username, words, urls, hashtags, mentions, words_per_time, timestamp):
+	read_hashtags(tweet_text, timestamp)
 	tweet_words = tweet_text.split()
 	for word in tweet_words:
 		if len(word) > 1:
@@ -123,6 +125,7 @@ def main(input_file='tweets_FIXED.csv', delimiter='|', output_type='csv'):
 	
 	line_num = 0
 	remove_null_byte()
+	initialize_file('hashtags_network.csv', ['source', 'target'])
 
 	with open(input_file, 'rt', encoding="utf8") as csvfile:
 		try:
