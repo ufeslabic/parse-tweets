@@ -8,7 +8,9 @@ def read_hashtags(tweet, timestamp):
 	list_str_hashtags = []
 	for word in list_str_words:
 		if word.startswith("#") and not(word.endswith("…")):
-			list_str_hashtags.append("#"+remove_punctuation(word.lower()))
+			temp_word = remove_punctuation(word.lower())
+			if len(temp_word) > 1:
+				list_str_hashtags.append("#"+temp_word)
 	with open('hashtags_network.csv', 'a', encoding="utf8") as csvfile:			
 		file_writer = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)			
 		for item in itertools.combinations(list_str_hashtags, 2):
