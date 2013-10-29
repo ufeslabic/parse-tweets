@@ -20,7 +20,7 @@ def time_period_grouper(start_date, some_date):
 	return(some_date-start_date).days // 1
 
 
-def word_over_time(timestamps_list):	
+def word_over_time(timestamps_list):
 	startdate = min(timestamps_list)	
 	rounded_startdate = startdate.strftime('%d/%m/%Y')
 	rounded_startdate = datetime.datetime.strptime(rounded_startdate, '%d/%m/%Y')
@@ -30,11 +30,11 @@ def word_over_time(timestamps_list):
 		word_per_day[day] = len(list(number_of_dates))
 	return word_per_day
 		
-def create_time_steps(timestamps_list):
+def create_time_steps(timestamps_list):	
 	time_step = min(timestamps_list)
 	time_step = time_step.strftime('%d/%m/%Y')
 	time_step = datetime.datetime.strptime(time_step, '%d/%m/%Y')
-	delta = datetime.timedelta(1) #delta de 1 dia
+	delta = datetime.timedelta(1) #one day delta
 	step_number = 0
 	time_intervals = []
 	while time_step < max(timestamps_list):
@@ -45,9 +45,14 @@ def create_time_steps(timestamps_list):
 
 def timeline(words_per_time, list_of_words, timestamps_list):
 	grouped_by_words = {}
+	if not(timestamps_list):
+		print("Error generating timeline: not enough data.")
+		return
 	for word in list_of_words:
-		grouped_by_words[word] = word_over_time(words_per_time[word])
-	
+		try:
+			grouped_by_words[word] = word_over_time(words_per_time[word])
+		except KeyError:
+			pass	
 	with open('words_per_period.csv', 'w', newline='', encoding="utf8") as csvfile:
 		file_writer = csv.writer(csvfile, delimiter='|', quotechar='"', quoting=csv.QUOTE_MINIMAL)
 		file_writer.writerow(['*'] + list_of_words)

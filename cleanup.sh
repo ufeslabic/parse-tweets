@@ -11,7 +11,7 @@ mv top_tweets.csv results
 mv users_by_date.csv results
 mv users_activity.csv results
 mv hashtags_network.csv results
-mv words_per_period.csv results
+mv words_per_period.csv results 2> /dev/null
 mv top_words_wordle.txt results
 mv top_hashtags_wordle.txt results
 

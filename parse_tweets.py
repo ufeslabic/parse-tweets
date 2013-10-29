@@ -123,37 +123,40 @@ def main(input_file='tweets_FIXED.csv', delimiter='|', output_type='csv'):
 	words_per_time = {}	
 	number_of_topwords = options_parser(sys.argv)['number_of_words']
 	
-	line_num = 0
+	line_num = 0	
 	remove_null_byte()
 	initialize_file('hashtags_network.csv', ['source', 'target'])
+	cluster_usernames = get_cluster_usernames()
 
 	with open(input_file, 'rt', encoding="utf8") as csvfile:
 		try:
-			csv_in = csv.reader(csvfile, delimiter=delimiter, quotechar='"')		
-			for line in csv_in:			
-				tweet_text = line[0]
-				tweets_count[tweet_text] += 1
+			csv_in = csv.reader(csvfile, delimiter=delimiter, quotechar='"')
+			next(csv_in) #skips the line with the column titles
+			for line in csv_in:
 				username = line[2]
-				users[username] += 1
-				try:					
-					timestamp = line[12]
-					if timestamp:
-						normal_format_date = datetime.datetime.fromtimestamp(int(timestamp)).strftime('%d/%m/%Y')
-						count_users_by_date(users_by_date, normal_format_date, username)
-						dates[datetime.datetime.fromtimestamp(int(timestamp)).strftime('%d/%m/%Y')] += 1
-						timestamp = datetime.datetime.fromtimestamp(int(timestamp))
-						timestamp_list.append(timestamp)
-				except:
-					timestamp = ''						
+				if (not cluster_usernames) or (username in cluster_usernames):
+					tweet_text = line[0]
+					tweets_count[tweet_text] += 1
+					users[username] += 1					
+					try:					
+						timestamp = line[12]
+						if timestamp:
+							normal_format_date = datetime.datetime.fromtimestamp(int(timestamp)).strftime('%d/%m/%Y')
+							count_users_by_date(users_by_date, normal_format_date, username)
+							dates[datetime.datetime.fromtimestamp(int(timestamp)).strftime('%d/%m/%Y')] += 1
+							timestamp = datetime.datetime.fromtimestamp(int(timestamp))
+							timestamp_list.append(timestamp)
+					except:				
+						timestamp = ''						
 
-				# lines where the eighth column is 'Point' have geographical data
-				try:
-					if line[8] == 'Point':
-						users_position[username] = (line[9],line[10])
-				except: 
-					pass #if the tweet doesn't have geocoordinates 
-				
-				read_tweet_text(tweet_text, username, words, urls, hashtags, mentions,words_per_time, timestamp)
+					# lines where the eighth column is 'Point' have geographical data
+					try:
+						if line[8] == 'Point':
+							users_position[username] = (line[9],line[10])
+					except: 
+						pass #if the tweet doesn't have geocoordinates 
+					
+					read_tweet_text(tweet_text, username, words, urls, hashtags, mentions,words_per_time, timestamp)
 				line_num = line_num + 1
 
 		except UnicodeDecodeError:
@@ -168,8 +171,8 @@ def main(input_file='tweets_FIXED.csv', delimiter='|', output_type='csv'):
 	for key, list_of_users in mentions.items():
 		mentions[key] = len(list_of_users)
 	
-	locations_to_csv(users_position)
-
+	print(errors)
+	locations_to_csv(users_position)	
 	top_something_to_csv(urls, 'urls.csv', ['urls', 'distinct_users'], True, sort_key=lambda t: t[1], value_format=lambda t: len(t))
 	top_something_to_csv(users_by_date, 'users_by_date.csv', ['date', 'distinct_users'], reverse=False, sort_key=lambda t:(t[0:2], t[3:5], t[6:8]), value_format=lambda t: len(t))
 	top_something_to_csv(dates, 'dates.csv', ['date', 'number_of_tweets'], reverse=False, sort_key=lambda t: datetime.date(int(t[0][6:]), int(t[0][3:5]), int(t[0][:2])))

@@ -14,6 +14,8 @@ def normalize_dict(dic):
 
 # writes the normalized dict in a txt to be pasted manually in wordle.net
 def dict_to_txt_for_wordle(dict_in, filename, sort_key=lambda t:t, value_key=lambda t:t):
+	if not dict_in:
+		dict_in = {'No hashtags found':1}
 	ordered_list = []
 	dict_in = normalize_dict(dict_in)
 	for key, value in dict_in.items():

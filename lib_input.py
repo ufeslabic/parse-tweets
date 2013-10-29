@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # coding: utf-8
-import sys, subprocess, getopt
+import csv, sys, subprocess, getopt
 
 # parses the command line options
 def options_parser(argv):
@@ -25,6 +25,22 @@ def options_parser(argv):
 # tweets_FIXED.csv is the file is that will be used by the script
 def remove_null_byte():
 	subprocess.call(["sh", "remove_null_byte.sh"])
+
+def get_cluster_usernames():
+	usernames = set([])
+	try:
+		with open('cluster_usernames.csv', 'rt', encoding="utf8") as csvfile:
+			csv_in = csv.reader(csvfile, delimiter='|', quotechar='"')
+			next(csv_in)
+			for line in csv_in:
+				usernames.add(line[0])
+	except :
+		usernames = {}
+	if len(usernames) == 0:
+		return {}
+	else:
+		return usernames
+
 
 # calls a bash script to remove the tweets_FIXED.csv 
 # and moves the results to the results folder
