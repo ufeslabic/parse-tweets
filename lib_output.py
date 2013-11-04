@@ -58,6 +58,6 @@ def error_parsing(line_num):
 	sys.exit()
 
 def initialize_file(filename, list_str_columns_titles):
-	with open(filename, 'w', newline='', encoding="utf8") as csvfile:
+	with open(filename, 'w', newline='', encoding='utf8') as csvfile:
 		file_writer = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)	
 		file_writer.writerow(list_str_columns_titles)

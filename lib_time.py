@@ -46,7 +46,7 @@ def create_time_steps(timestamps_list):
 def timeline(words_per_time, list_of_words, timestamps_list):
 	grouped_by_words = {}
 	if not(timestamps_list):
-		print("Error generating timeline: not enough data.")
+		print("Error generating timeline: not enough data. Specifying more profiles in the cluster_usernames.csv file may solve this.")
 		return
 	for word in list_of_words:
 		try:

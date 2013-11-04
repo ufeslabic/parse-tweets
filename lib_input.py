@@ -39,6 +39,7 @@ def get_cluster_usernames():
 	if len(usernames) == 0:
 		return {}
 	else:
+		print("Loading usernames from 'cluster_usernames.csv' file.")
 		return usernames
 
 

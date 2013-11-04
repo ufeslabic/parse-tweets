@@ -64,7 +64,6 @@ def handle_mentions(profile_name, mentions, username):
 
 # reads the words in the tweet and decides what to do with them		
 def read_tweet_text(tweet_text, username, words, urls, hashtags, mentions, words_per_time, timestamp):
-	read_hashtags(tweet_text, timestamp)
 	tweet_words = tweet_text.split()
 	for word in tweet_words:
 		if len(word) > 1:
@@ -125,7 +124,7 @@ def main(input_file='tweets_FIXED.csv', delimiter='|', output_type='csv'):
 	
 	line_num = 0	
 	remove_null_byte()
-	initialize_file('hashtags_network.csv', ['source', 'target'])
+	initialize_file('hashtags_network.csv', ['source', 'target','timestamp'])
 	cluster_usernames = get_cluster_usernames()
 
 	with open(input_file, 'rt', encoding="utf8") as csvfile:
@@ -140,6 +139,7 @@ def main(input_file='tweets_FIXED.csv', delimiter='|', output_type='csv'):
 					users[username] += 1					
 					try:					
 						timestamp = line[12]
+						read_hashtags(tweet_text, timestamp)
 						if timestamp:
 							normal_format_date = datetime.datetime.fromtimestamp(int(timestamp)).strftime('%d/%m/%Y')
 							count_users_by_date(users_by_date, normal_format_date, username)
@@ -171,7 +171,6 @@ def main(input_file='tweets_FIXED.csv', delimiter='|', output_type='csv'):
 	for key, list_of_users in mentions.items():
 		mentions[key] = len(list_of_users)
 	
-	print(errors)
 	locations_to_csv(users_position)	
 	top_something_to_csv(urls, 'urls.csv', ['urls', 'distinct_users'], True, sort_key=lambda t: t[1], value_format=lambda t: len(t))
 	top_something_to_csv(users_by_date, 'users_by_date.csv', ['date', 'distinct_users'], reverse=False, sort_key=lambda t:(t[0:2], t[3:5], t[6:8]), value_format=lambda t: len(t))

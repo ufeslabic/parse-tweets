@@ -12,11 +12,10 @@ def read_hashtags(tweet, timestamp):
 			if len(temp_word) > 1:
 				list_str_hashtags.append("#"+temp_word)
 	with open('hashtags_network.csv', 'a', encoding="utf8") as csvfile:			
-		file_writer = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)			
+		file_writer = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
 		for item in itertools.combinations(list_str_hashtags, 2):
-			#we choose to not use the timesamp by now
-			#file_writer.writerow([item[0], item[1], timestamp])
-			file_writer.writerow([item[0], item[1]])
+			file_writer.writerow([item[0], item[1], timestamp])
+			
 
 	
 
