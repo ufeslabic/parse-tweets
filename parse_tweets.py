@@ -125,7 +125,8 @@ def main(input_file='tweets_FIXED.csv', delimiter='|', output_type='csv'):
 	line_num = 0	
 	remove_null_byte()
 	initialize_file('hashtags_network.csv', ['source', 'target','timestamp'])
-	cluster_usernames = get_cluster_usernames()
+	cluster_usernames = get_cluster_usernames()	
+	#cluster_usernames = {}
 
 	with open(input_file, 'rt', encoding="utf8") as csvfile:
 		try:
@@ -133,6 +134,7 @@ def main(input_file='tweets_FIXED.csv', delimiter='|', output_type='csv'):
 			next(csv_in) #skips the line with the column titles
 			for line in csv_in:
 				username = line[2]
+				username = username.lower()
 				if (not cluster_usernames) or (username in cluster_usernames):
 					tweet_text = line[0]
 					tweets_count[tweet_text] += 1
@@ -163,6 +165,7 @@ def main(input_file='tweets_FIXED.csv', delimiter='|', output_type='csv'):
 				print(line)
 				error_parsing(line_num)
 		except IndexError:
+				print(line)
 				print("Erro na linha:" + str(line_num))
 
 	for key, list_of_users in hashtags.items():
