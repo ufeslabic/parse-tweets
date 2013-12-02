@@ -61,6 +61,8 @@ And two txt files to be used with Wordle(http://www.wordle.net/create) or Tagxed
 * top_hashtags_wordle.txt: Text containing the most mentioned hashtags of the tweets. Paste it on wordle.net to generate a wordcloud that you can customize.
 
 
-
-
+------------------
+BETA
+------------------
+This script is in Beta stage, which means it may contain errors or inaccurate results. Feel free(and please do so!) to report any bugs you find. 
 
