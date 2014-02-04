@@ -35,11 +35,12 @@ def handle_hashtags(str_hashtag, dict_set_hashtags, str_username):
 	users that tweeted the key hashtag.
 	"""
 	str_hashtag = remove_punctuation(str_hashtag)
-	str_hashtag = str_hashtag.lower()
-	try:	
-		dict_set_hashtags[str_hashtag].add(str_username)
-	except KeyError:		
-		dict_set_hashtags[str_hashtag] = set([str_username])
+	if str_hashtag is not None:
+		str_hashtag = str_hashtag.lower()
+		try:
+			dict_set_hashtags[str_hashtag].add(str_username)
+		except KeyError:
+			dict_set_hashtags[str_hashtag] = set([str_username])
 
 def handle_mentions(str_mentioned_username, dict_set_mentions, username_that_mentioned):
 	"""
@@ -47,11 +48,12 @@ def handle_mentions(str_mentioned_username, dict_set_mentions, username_that_men
 	users that mentioned the key profile.
 	"""
 	str_mentioned_username = remove_punctuation(str_mentioned_username)
-	str_mentioned_username = str_mentioned_username.lower()
-	try:
-		dict_set_mentions[str_mentioned_username].add(username_that_mentioned)
-	except KeyError:
-		dict_set_mentions[str_mentioned_username] = set([username_that_mentioned])
+	if str_mentioned_username is not None:
+		str_mentioned_username = str_mentioned_username.lower()
+		try:
+			dict_set_mentions[str_mentioned_username].add(username_that_mentioned)
+		except KeyError:
+			dict_set_mentions[str_mentioned_username] = set([username_that_mentioned])
 
 def handle_common_words(str_word, dict_int_words):
 	""" 
@@ -59,10 +61,11 @@ def handle_common_words(str_word, dict_int_words):
 	count if it already was used. 
 	"""
 	str_word = remove_punctuation(str_word)
-	str_word = str_word.lower()
-	#after the word was cleaned, it may have 0 letters i.e: if the word was ";)"
-	if str_word not in CUSTOMIZED_STOPWORDS and len(str_word) > 1: 
-		dict_int_words[str_word] += 1
+	if str_word is not None:
+		str_word = str_word.lower()
+		#after the word was cleaned, it may have 0 letters i.e: if the word was ";)"
+		if str_word not in CUSTOMIZED_STOPWORDS and len(str_word) > 1: 
+			dict_int_words[str_word] += 1
 	
 # part of the new feature, not yet finished	
 def count_users_by_date(dict_int_users_by_date, str_date, str_username):
@@ -79,12 +82,13 @@ def count_users_by_date(dict_int_users_by_date, str_date, str_username):
 def add_word_on_timeline(str_word, words_per_time, timestamp):
 	if timestamp is not '':
 		str_word = remove_punctuation(str_word)
-		str_word = str_word.lower()
-		if str_word not in CUSTOMIZED_STOPWORDS and len(str_word) > 1:
-			try:
-				words_per_time[str_word].append(timestamp)
-			except KeyError:
-				words_per_time[str_word] = [timestamp]
+		if str_word is not None:
+			str_word = str_word.lower()
+			if str_word not in CUSTOMIZED_STOPWORDS and len(str_word) > 1:
+				try:
+					words_per_time[str_word].append(timestamp)
+				except KeyError:
+					words_per_time[str_word] = [timestamp]
 
 def read_tweet_text(tweet_text, str_username, words, dict_set_urls, dict_set_hashtags, 
 	dict_set_mentions, words_per_time, timestamp):
@@ -106,7 +110,7 @@ def read_tweet_text(tweet_text, str_username, words, dict_set_urls, dict_set_has
 				handle_common_words(str_word, words)
 				add_word_on_timeline(str_word, words_per_time, timestamp)
 
-def main(input_file='tweets_FIXED.csv', delimiter=DEFAULT_INPUT_DELIMITER, output_type='csv'):
+def main(input_file='tweets_FIXED.csv'):
 	"""
 	Input file is set to 'tweets_FIXED' because it is the output of remove_null_byte()
 	"""
@@ -168,55 +172,58 @@ def main(input_file='tweets_FIXED.csv', delimiter=DEFAULT_INPUT_DELIMITER, outpu
 
 	# counter for the number of incorrect timestamps in a dataset
 	int_incorrect_timestamps = 0
+
+	# counter for the number of corrupted lines
+	int_corrupted_lines = 0
 	
 	# The "Words timeline" feature is not entirely finished nor documented.
 	timestamp_list =[]
 	words_per_time = {}	
-	number_of_topwords = terminal_options['number_of_words']
+	number_of_topwords = terminal_options['number_of_words']	
 	
 	with open(input_file, 'rt', encoding="utf8") as csvfile:
 		try:
-			csv_in = csv.reader(csvfile, delimiter=delimiter, quotechar='"')
+			csv_in = csv.reader(csvfile, delimiter=DEFAULT_INPUT_DELIMITER)
 			next(csv_in) #Skips the line with the column titles.
 			for line in csv_in:
-				str_username = line[2]
-				str_username = str_username.lower()
-				if (not list_cluster_usernames) or (str_username in list_cluster_usernames):
-					tweet_text = line[0]
-					tweets_count[tweet_text] += 1
-					dict_int_users_activity[str_username] += 1
-
-					try:
+				if len(line) is 13:
+					str_username = line[2]
+					str_username = str_username.lower()
+					if (not list_cluster_usernames) or (str_username in list_cluster_usernames):
+						tweet_text = line[0]
+						tweets_count[tweet_text] += 1
+						dict_int_users_activity[str_username] += 1
+						try:
+							# Sometimes this data is corrupted by YourTwapperKeeper,
+							# this is why this clause is in a "try" block.
+							timestamp = line[12]
+							list_tuple_hashtags_relations = list_tuple_hashtags_relations + process_hashtags_relations(tweet_text)
+							if timestamp:
+								str_date = datetime.datetime.fromtimestamp(int(timestamp)).strftime('%d/%m/%Y') # date STRING in the format DD/MM/YYYY
+								count_users_by_date(dict_int_users_by_date, str_date, str_username)
+								dates[datetime.datetime.fromtimestamp(int(timestamp)).strftime('%d/%m/%Y')] += 1
+								timestamp = datetime.datetime.fromtimestamp(int(timestamp))
+								timestamp_list.append(timestamp)
+						except ValueError:
+							timestamp = ''
+							int_incorrect_timestamps += 1
+						# Lines where the eighth column is 'Point' have 
+						# geographical data on columns 9(latitude) and 10(longitute).
 						# Sometimes this data is corrupted by YourTwapperKeeper,
 						# this is why this clause is in a "try" block.
-						timestamp = line[12]						
-						list_tuple_hashtags_relations = list_tuple_hashtags_relations + process_hashtags_relations(tweet_text)
-						if timestamp:							
-							str_date = datetime.datetime.fromtimestamp(int(timestamp)).strftime('%d/%m/%Y') # date STRING in the format DD/MM/YYYY
-							count_users_by_date(dict_int_users_by_date, str_date, str_username)
-							dates[datetime.datetime.fromtimestamp(int(timestamp)).strftime('%d/%m/%Y')] += 1
-							timestamp = datetime.datetime.fromtimestamp(int(timestamp))
-							timestamp_list.append(timestamp)
-					except ValueError:				
-						timestamp = ''
-						int_incorrect_timestamps += 1
-
-					# Lines where the eighth column is 'Point' have 
-					# geographical data on columns 9(latitude) and 10(longitute).
-					# Sometimes this data is corrupted by YourTwapperKeeper,
-					# this is why this clause is in a "try" block.
-					if line[8] == 'Point':					
-						dict_tuple_users_positions[str_username] = (line[9],line[10])							
-
-					read_tweet_text(tweet_text, str_username, dict_int_words, dict_set_urls, dict_set_hashtags, dict_set_mentions,words_per_time, timestamp)
-				
-
+						if line[8] == 'Point':					
+							dict_tuple_users_positions[str_username] = (line[9],line[10])
+							read_tweet_text(tweet_text, str_username, dict_int_words, dict_set_urls, dict_set_hashtags, dict_set_mentions,words_per_time, timestamp)
+				else:
+					int_corrupted_lines += 1
+						
 		except UnicodeDecodeError:
 				print(line)
 				error_parsing(csv_in.line_num)
 		except IndexError:
 				print(line)
-				print("Erro in the line:" + str(csv_in.line_num))
+				print("Error in the line:" + str(csv_in.line_num))
+
 		int_total_line_num = csv_in.line_num		
 
 	# Sets the hashtag dict entry count as the length of the set of different users that tweeted it.
@@ -281,9 +288,11 @@ def main(input_file='tweets_FIXED.csv', delimiter=DEFAULT_INPUT_DELIMITER, outpu
 	# the files generated there and delete the tweets_FIXED.csv file.
 	cleanup()
 
-	print("Number of tweets read: "+ str(int_total_line_num) + ".")
-	print("Number of corrupted timestamps: "+ str(int_incorrect_timestamps) + ".")
+	print("Number of lines read: "+ str(int_total_line_num) + ".")
 	print("Number of users with location coordinates: "+ str(len(dict_tuple_users_positions.keys())) + ".")
+	print("Number of corrupted lines: "+ str(int_corrupted_lines) + ".")
+	print("Number of corrupted timestamps: "+ str(int_incorrect_timestamps) + ".")
+	
 
 if __name__ == '__main__':	
 	main()
