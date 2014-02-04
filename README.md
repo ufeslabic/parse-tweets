@@ -32,11 +32,11 @@ When the script is done running the results will be in the 'RESULTS'. The files 
 
 Some pipe delimited csv's:
 
-* dates.csv:		number of tweets per day in the given dataset;
+* dates.csv:        number of tweets per day in the given dataset;
 
-* hashtags.csv: 	number of users using the hashtags;
+* hashtags.csv:     number of users using the hashtags;
 
-* locations.csv: 	geo coordinates of the tweets. The number is significantly smaller than the whole dataset because a very small number of tweets(less than 5%) have geographical data.
+* locations.csv:    geo coordinates of the tweets. The number is significantly smaller than the whole dataset because a very small number of tweets(less than 5%) have geographical data.
 
 * mentions.csv: most mentioned profiles
 
@@ -50,9 +50,11 @@ Some pipe delimited csv's:
 
 * words_per_period: table with a timeline of the top 10(default) words in a given dataset
 
+* top_words.csv: file with the most 1000 mentioned words;
+
 One comma delimited CSV:
 
-* hashtags_network.csv: 	a csv file to be used with Gephi in order to generate a graph of hashtags;
+* hashtags_network.csv:     a csv file to be used with Gephi in order to generate a graph of hashtags;
 
 And two txt files to be used with Wordle(http://www.wordle.net/create) or Tagxedo to generate and customize your wordclouds:
 

@@ -1,164 +1,216 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import csv, sys
+DEFAULT_OUTPUT_DELIMITER = '|'
+DEFAULT_INPUT_DELIMITER = '|'
+
+import csv
+import sys
 from collections import defaultdict
-from hashtags_network import *
-from lib_cleaning import *
-from lib_output import *
-from lib_input import *
+
+from hashtags_network import hashtags_relations_to_csv
+from hashtags_network import process_hashtags_relations
+from lib_cleaning import remove_punctuation, CUSTOMIZED_STOPWORDS
+from lib_input import DEFAULT_INPUT_DELIMITER, cleanup, get_cluster_usernames 
+from lib_input import options_parser, remove_null_byte
+from lib_output import top_something_to_csv, hashtags_relations_to_csv
+from lib_output import dict_to_txt_for_wordle, locations_to_csv
+from lib_twitter import is_hashtag, is_mention, is_valid_twitter_short_url
+
 from lib_time import *
 
-# adds a date to the dates dictionary and the username that tweeeted it
-# if it's the first time date occurs, it is inserted with only this username
-def count_users_by_date(users_by_date, normal_format_date, username):
-	try:
-		users_by_date[normal_format_date].add(username)
-	except KeyError:
-		users_by_date[normal_format_date] = set([username])
-
-# adds a word to the dictionary of words and increment it's count
-# if it's the first time this word is mentioned, it is inserted with count = 1
-def handle_common_words(word, tweet_words, words, words_per_time, timestamp):
-	lower_case_word = word.lower()
-	clean_word = remove_punctuation(lower_case_word)
-	if lower_case_word not in stopwords:
-		words[clean_word] += 1
-		if timestamp is not '':
-			try:
-				words_per_time[clean_word].append(timestamp)
-			except KeyError:
-				words_per_time[clean_word] = [timestamp]
-
-
-# adds a URL to the hashtags dictionary and the username that tweeeted it
-# if it's the first time this URL is tweeeted, it is inserted with only this username
-def handle_urls(url, urls, username):	
-	if len(url) in [22,23]: #checks if the URL wasn't truncated
+def handle_urls(str_url, dict_set_urls, str_username):
+	"""
+	Adds a URL to the URLS dictionary. Each entry contains a set of 
+	users that tweeted the key URL.
+	"""	
+	if is_valid_twitter_short_url(str_url):
 		try:
-			urls[url].add(username)
+			dict_set_urls[str_url].add(str_username)
 		except KeyError:
-			# if the URL isn't in the URL's dict yet, adds it
-			urls[url] = set([username])
+			dict_set_urls[str_url] = set([str_username])
 
-# adds a hashtag to the hashtags dictionary and the username that mentioned it
-# if it's the first time this hashtag is mentioned, it is inserted with only this username
-def handle_hashtags(hashtag, hashtags, username):
-	hashtag = remove_punctuation(hashtag)
-	lower_case_hashtag = hashtag.lower()
+def handle_hashtags(str_hashtag, dict_set_hashtags, str_username):
+	"""
+	Adds a hashtag to the hashtags dictionary. Each entry contains a set of 
+	users that tweeted the key hashtag.
+	"""
+	str_hashtag = remove_punctuation(str_hashtag)
+	str_hashtag = str_hashtag.lower()
+	try:	
+		dict_set_hashtags[str_hashtag].add(str_username)
+	except KeyError:		
+		dict_set_hashtags[str_hashtag] = set([str_username])
+
+def handle_mentions(str_mentioned_username, dict_set_mentions, username_that_mentioned):
+	"""
+	Adds a mention to the mentions dictionary. Each entry contains a set of 
+	users that mentioned the key profile.
+	"""
+	str_mentioned_username = remove_punctuation(str_mentioned_username)
+	str_mentioned_username = str_mentioned_username.lower()
 	try:
-		# adds the username to the set of usernames that commented on this hashtag
-		hashtags[lower_case_hashtag].add(username)
+		dict_set_mentions[str_mentioned_username].add(username_that_mentioned)
 	except KeyError:
-		# if the hashtag isn't in the hashtags dict yet, adds it
-		hashtags[lower_case_hashtag] = set([username])
+		dict_set_mentions[str_mentioned_username] = set([username_that_mentioned])
 
-# nothing is being done with mentions for now
-def handle_mentions(profile_name, mentions, username):
-	profile_name = remove_punctuation(profile_name)
+def handle_common_words(str_word, dict_int_words):
+	""" 
+	Inserts a word in the dictionary of word counts or increment the 
+	count if it already was used. 
+	"""
+	str_word = remove_punctuation(str_word)
+	str_word = str_word.lower()
+	#after the word was cleaned, it may have 0 letters i.e: if the word was ";)"
+	if str_word not in CUSTOMIZED_STOPWORDS and len(str_word) > 1: 
+		dict_int_words[str_word] += 1
+	
+# part of the new feature, not yet finished	
+def count_users_by_date(dict_int_users_by_date, str_date, str_username):
+	"""
+	Adds a date to the dates dictionary and the usernames that 
+	tweeeted on this date.
+	"""
 	try:
-		# adds the username to the set of usernames that commented on this hashtag
-		mentions[profile_name].add(username)
+		dict_int_users_by_date[str_date].add(str_username)
 	except KeyError:
-		# if the hashtag isn't in the hashtags dict yet, adds it
-		mentions[profile_name] = set([username])
+		dict_int_users_by_date[str_date] = set([str_username])
 
-# reads the words in the tweet and decides what to do with them		
-def read_tweet_text(tweet_text, username, words, urls, hashtags, mentions, words_per_time, timestamp):
+# part of the new feature, not yet finished
+def add_word_on_timeline(str_word, words_per_time, timestamp):
+	if timestamp is not '':
+		str_word = remove_punctuation(str_word)
+		str_word = str_word.lower()
+		if str_word not in CUSTOMIZED_STOPWORDS and len(str_word) > 1:
+			try:
+				words_per_time[str_word].append(timestamp)
+			except KeyError:
+				words_per_time[str_word] = [timestamp]
+
+def read_tweet_text(tweet_text, str_username, words, dict_set_urls, dict_set_hashtags, 
+	dict_set_mentions, words_per_time, timestamp):
+	"""
+	Reads each string in a tweet. If a string isn't an URL, a mention 
+	or a hashtag it can be a smiley face, pure punctuation or 
+	just a regular word.
+	"""
 	tweet_words = tweet_text.split()
-	for word in tweet_words:
-		if len(word) > 1:
-			if word.startswith("http"):
-				handle_urls(word, urls, username)
-			else:				
-				if word.startswith("#"):
-					handle_hashtags(word, hashtags, username)
-				elif word.startswith("@"):
-					handle_mentions(word, mentions, username)
-				else: #if the word isn't  hashtag, mention or URL it is a common word
-					handle_common_words(word, tweet_words, words, words_per_time, timestamp)					
+	for str_word in tweet_words:
+		if len(str_word) > 1 and not str_word.endswith('…'): # if it ends in '…' the tweet was truncated by YTK
+			if str_word.startswith("ht") or str_word.startswith('hr'):
+				handle_urls(str_word, dict_set_urls, str_username)
+			elif is_hashtag(str_word):
+				handle_hashtags(str_word, dict_set_hashtags, str_username)
+			elif is_mention(str_word):
+				handle_mentions(str_word, dict_set_mentions, str_username)
+			else:
+				handle_common_words(str_word, words)
+				add_word_on_timeline(str_word, words_per_time, timestamp)
 
-		
-# the input file is set to 'tweets_FIXED' because it is the output of remove_null_byte
-def main(input_file='tweets_FIXED.csv', delimiter='|', output_type='csv'):
+def main(input_file='tweets_FIXED.csv', delimiter=DEFAULT_INPUT_DELIMITER, output_type='csv'):
+	"""
+	Input file is set to 'tweets_FIXED' because it is the output of remove_null_byte()
+	"""
+	remove_null_byte()
+	list_cluster_usernames = get_cluster_usernames()
+	terminal_options = options_parser(sys.argv)
+	
+	# Dictionary of URLS where each entry contains a set of distinct 
+	# usernames that tweeted this URL.
+	# Entry example: 'http://www.google.com' => ['Mary','John','Ronaldo']	
+	dict_set_urls = {}
 
-	# dictionary of URLS where each entry contains a set of distinct usernames that tweeted this URL
-	urls = {}
-	# entry example: 'http://www.google.com' => ['Mary','John','Ronaldo']
-
-	# dictionary of hashtags where each entry contains a set of distinct usernames that commented on this hashtag
-	hashtags = {}
+	# Dictionary of hashtags where each entry contains a set of distinct
+	#usernames that commented on this hashtag.
 	# entry example: 'chocolate' => ['johnDoe85','barack0','_b0btables', ...]
+	dict_set_hashtags = {}	
 
-	# dictionary of mentions where each entry contains a set of distinct usernames that commented on this hashtag
-	mentions = {}
-	# entry example: 'uFulano2128_' => ['johnDoe85','barack0','_b0btables', ...]
+	# Dictionary of mentions where each entry contains a set of distinct 
+	# usernames that mentioned a profile.
+	# Entry example: 'uFulano2128_' => ['johnDoe85','barack0','_b0btables', ...]
+	dict_set_mentions = {}
 
-	# dictionary of users where each entry contains their geo-coordinates, up to one per user
+	# Dictionary of users where each entry contains their last given geo-coordinates
+	# Entry example: 'random_Person' => (latitude,longitude)
 	users_position = {}
-	# entry example: 'random_Person' => (latitude,longitude)
 
-	# dictionary of distinct usernamess by date
-	users_by_date = {}
-	# entry example: '04/05/2013' => ['ronaLDO', 'Rivaldo', 'RobertoCarlos_']
-
-	# dictionary of users where each entry contains their geo-coordinates, up to one per user
-	users = defaultdict(int)
-	# entry example: 'random_Person' => (latitude,longitude)
-
-	# dictionary of words where each entry contains the times they were mentioned	
-	words = defaultdict(int)
-	# entry example: 'chocolate' => 9001
-
-	# dictionary of the number of tweets per day
+	# Dictionary of distinct usernames by date.
+	# Entry example: '04/05/2013' => ['ronaLDO', 'Rivaldo', 'RobertoCarlos_']
+	dict_int_users_by_date = {}
+	
+	# Dictionary of words where each entry contains the number of times 
+	# they were mentioned.
+	# Entry example: 'chocolate' => 9001
+	dict_int_words = defaultdict(int)
+	
+	# Dictionary with the number of tweets in a given date. 
+	# entry example: '02/08/2013' => 1234
 	dates = defaultdict(int)
-	# entry example: '02/08/2013' => 1234	
 
-	# dictionary of words where each entry contains the times they were mentioned	
+	# Dictionary with the number of distinct users that tweeted a hashtag. 
+	# entry example: 'beliebers' => 12
+	dict_int_hashtags = defaultdict(int)
+
+	# Dictionary with the number of distinct users that mentioned a profile. 
+	# entry example: '0bama' => 789
+	dict_int_mentions = defaultdict(int)
+
+	# Dictionary with the number of tweets by a user. 
+	# entry example: 'ronald0' => 11
+	dict_int_users_activity = defaultdict(int)
+
+	# Dictionary with the tweet texts. 
+	# entry example: 'a nice tweet example #creativity' => 11
 	tweets_count = defaultdict(int)
-	# entry example: 'chocolate' => 9001
 
-	# variables for the timeline
+	# List with hashtags relations tuples
+	# entry example: (#salt, #pepper)
+	list_tuple_hashtags_relations = []
+
+	# Counts the current line in the csv reader file.
+	line_num = 0
+	
+	# The "Words timeline" feature is not entirely finished nor documented.
 	timestamp_list =[]
 	words_per_time = {}	
-	number_of_topwords = options_parser(sys.argv)['number_of_words']
+	number_of_topwords = terminal_options['number_of_words']
 	
-	line_num = 0	
-	remove_null_byte()
-	initialize_file('hashtags_network.csv', ['source', 'target','timestamp'])
-	cluster_usernames = get_cluster_usernames()	
-	#cluster_usernames = {}
-
 	with open(input_file, 'rt', encoding="utf8") as csvfile:
 		try:
 			csv_in = csv.reader(csvfile, delimiter=delimiter, quotechar='"')
-			next(csv_in) #skips the line with the column titles
+			next(csv_in) #Skips the line with the column titles.
 			for line in csv_in:
-				username = line[2]
-				username = username.lower()
-				if (not cluster_usernames) or (username in cluster_usernames):
+				str_username = line[2]
+				str_username = str_username.lower()
+				if (not list_cluster_usernames) or (str_username in list_cluster_usernames):
 					tweet_text = line[0]
 					tweets_count[tweet_text] += 1
-					users[username] += 1					
-					try:					
+					dict_int_users_activity[str_username] += 1
+
+					try:
+						# Sometimes this data is corrupted by YourTwapperKeeper,
+						# this is why this clause is in a "try" block.
 						timestamp = line[12]
-						read_hashtags(tweet_text, timestamp)
-						if timestamp:
-							normal_format_date = datetime.datetime.fromtimestamp(int(timestamp)).strftime('%d/%m/%Y')
-							count_users_by_date(users_by_date, normal_format_date, username)
+						list_tuple_hashtags_relations = list_tuple_hashtags_relations + process_hashtags_relations(tweet_text)
+						if timestamp:							
+							str_date = datetime.datetime.fromtimestamp(int(timestamp)).strftime('%d/%m/%Y') # date STRING in the format DD/MM/YYYY
+							count_users_by_date(dict_int_users_by_date, str_date, str_username)
 							dates[datetime.datetime.fromtimestamp(int(timestamp)).strftime('%d/%m/%Y')] += 1
 							timestamp = datetime.datetime.fromtimestamp(int(timestamp))
 							timestamp_list.append(timestamp)
 					except:				
-						timestamp = ''						
+						timestamp = ''
 
-					# lines where the eighth column is 'Point' have geographical data
 					try:
-						if line[8] == 'Point':
+						if line[8] == 'Point': 
+						# Lines where the eighth column is 'Point' have 
+						# geographical data on columns 9(latitude) and 10(longitute).
+						# Sometimes this data is corrupted by YourTwapperKeeper,
+						# this is why this clause is in a "try" block.
 							users_position[username] = (line[9],line[10])
 					except: 
-						pass #if the tweet doesn't have geocoordinates 
-					
-					read_tweet_text(tweet_text, username, words, urls, hashtags, mentions,words_per_time, timestamp)
+						pass
+
+					read_tweet_text(tweet_text, str_username, dict_int_words, dict_set_urls, dict_set_hashtags, dict_set_mentions,words_per_time, timestamp)
 				line_num = line_num + 1
 
 		except UnicodeDecodeError:
@@ -168,23 +220,66 @@ def main(input_file='tweets_FIXED.csv', delimiter='|', output_type='csv'):
 				print(line)
 				print("Erro na linha:" + str(line_num))
 
-	for key, list_of_users in hashtags.items():
-		hashtags[key] = len(list_of_users)
+	# Sets the hashtag dict entry count as the length of the set of different users that tweeted it.
+	for key, list_of_users in dict_set_hashtags.items():
+		dict_int_hashtags[key] = len(list_of_users)
 
-	for key, list_of_users in mentions.items():
-		mentions[key] = len(list_of_users)
+	# Sets the mention count as the length of the set of different users that mentioned it.
+	for key, list_of_users in dict_set_mentions.items():
+		dict_int_mentions[key] = len(list_of_users)
 	
-	locations_to_csv(users_position)	
-	top_something_to_csv(urls, 'urls.csv', ['urls', 'distinct_users'], True, sort_key=lambda t: t[1], value_format=lambda t: len(t))
-	top_something_to_csv(users_by_date, 'users_by_date.csv', ['date', 'distinct_users'], reverse=False, sort_key=lambda t:(t[0:2], t[3:5], t[6:8]), value_format=lambda t: len(t))
-	top_something_to_csv(dates, 'dates.csv', ['date', 'number_of_tweets'], reverse=False, sort_key=lambda t: datetime.date(int(t[0][6:]), int(t[0][3:5]), int(t[0][:2])))
-	top_something_to_csv(hashtags, 'hashtags.csv', ['hashtags', 'distinct_users_commenting'], True, sort_key=lambda t: t[1], value_format=lambda t:t)
-	top_something_to_csv(mentions, 'mentions.csv', ['mentions', 'distinct_users_mentioning'], True, sort_key=lambda t: t[1], value_format=lambda t:t)
-	top_something_to_csv(users, 'users_activity.csv', ['user', 'total_tweets'], True, sort_key=lambda t: t[1], value_format=lambda t:t)
-	top_something_to_csv(tweets_count, 'top_tweets.csv', ['tweet', 'times_tweeted'], True, sort_key=lambda t: t[1], value_format=lambda t:t)
-	dict_to_txt_for_wordle(words, 'top_words_wordle.txt', sort_key=lambda t:t[1])
-	dict_to_txt_for_wordle(hashtags, 'top_hashtags_wordle.txt', sort_key=lambda t: t[1])
-	timeline(words_per_time, get_N_first(words, number_of_topwords), timestamp_list)
+	# Writing the CSV's of all that was calculated.
+	locations_to_csv(users_position)
+	hashtags_relations_to_csv(list_tuple_hashtags_relations)
+	
+	top_something_to_csv(dict_set_urls, 'top_urls.csv', ['urls', 'distinct_users'], 
+		reverse=True, 
+		sort_key_function=lambda t: t[1], 
+		value_format_function=lambda t: len(t))
+	
+	top_something_to_csv(dict_int_users_by_date, 'users_by_date.csv', ['date', 'distinct_users'], 
+		reverse=False, 
+		sort_key_function=lambda t:(t[0:2], t[3:5], t[6:8]), 
+		value_format_function=lambda t: len(t))
+	
+	top_something_to_csv(dates, 'dates.csv', ['date', 'number_of_tweets'], 
+		reverse=False, 
+		sort_key_function=lambda t: datetime.date(int(t[0][6:]), int(t[0][3:5]), int(t[0][:2])))
+	
+	top_something_to_csv(dict_int_hashtags, 'hashtags.csv', ['hashtags', 'distinct_users_commenting'], 
+		reverse=True, 
+		sort_key_function=lambda t: t[1], 
+		value_format_function=lambda t:t)
+	
+	top_something_to_csv(dict_int_mentions, 'mentions.csv', ['mentions', 'distinct_users_mentioning'], 
+		reverse=True, 
+		sort_key_function=lambda t: t[1], 
+		value_format_function=lambda t:t)	
+	
+	top_something_to_csv(dict_int_users_activity, 'users_activity.csv', ['user', 'total_tweets'], 
+		reverse=True, 
+		sort_key_function=lambda t: t[1], 
+		value_format_function=lambda t:t)
+	
+	top_something_to_csv(tweets_count, 'top_tweets.csv', ['tweet', 'times_tweeted'], 
+		reverse=True, 
+		sort_key_function=lambda t: t[1], 
+		value_format_function=lambda t:t)
+	
+	top_something_to_csv(dict_int_words, 'top_words.csv', ['word', 'times_mentioned'], 
+		reverse=True, 
+		sort_key_function=lambda t: t[1], 
+		value_format_function=lambda t:t)
+
+	# Writing the TXT's files of the wordclouds.
+	dict_to_txt_for_wordle(dict_int_words, 'top_words_wordle.txt', sort_key=lambda t:t[1])
+	dict_to_txt_for_wordle(dict_int_hashtags, 'top_hashtags_wordle.txt', sort_key=lambda t: t[1])
+
+	# Writing the word timeline.
+	timeline(words_per_time, get_N_first(dict_int_words, number_of_topwords), timestamp_list)
+
+	# Calling the bash script to create a RESULTS folder, move all 
+	# the files generated there and delete the tweets_FIXED.csv file.
 	cleanup()
 
 if __name__ == '__main__':	

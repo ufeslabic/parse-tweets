@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
+"""
+This module is a work in progress.
+"""
+import csv
+import datetime
 from itertools import groupby
-import datetime, csv
 
 # returns the N topwords of a list
 def get_N_first(words, number):
@@ -18,7 +21,6 @@ def get_N_first(words, number):
 # function used as key for the group by to group by day
 def time_period_grouper(start_date, some_date):
 	return(some_date-start_date).days // 1
-
 
 def word_over_time(timestamps_list):
 	startdate = min(timestamps_list)	
