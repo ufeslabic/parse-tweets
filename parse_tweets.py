@@ -131,7 +131,7 @@ def main(input_file='tweets_FIXED.csv', delimiter=DEFAULT_INPUT_DELIMITER, outpu
 
 	# Dictionary of users where each entry contains their last given geo-coordinates
 	# Entry example: 'random_Person' => (latitude,longitude)
-	users_position = {}
+	dict_tuple_users_positions = {}
 
 	# Dictionary of distinct usernames by date.
 	# Entry example: '04/05/2013' => ['ronaLDO', 'Rivaldo', 'RobertoCarlos_']
@@ -166,8 +166,8 @@ def main(input_file='tweets_FIXED.csv', delimiter=DEFAULT_INPUT_DELIMITER, outpu
 	# entry example: (#salt, #pepper)
 	list_tuple_hashtags_relations = []
 
-	# Counts the current line in the csv reader file.
-	line_num = 0
+	# counter for the number of incorrect timestamps in a dataset
+	int_incorrect_timestamps = 0
 	
 	# The "Words timeline" feature is not entirely finished nor documented.
 	timestamp_list =[]
@@ -189,7 +189,7 @@ def main(input_file='tweets_FIXED.csv', delimiter=DEFAULT_INPUT_DELIMITER, outpu
 					try:
 						# Sometimes this data is corrupted by YourTwapperKeeper,
 						# this is why this clause is in a "try" block.
-						timestamp = line[12]
+						timestamp = line[12]						
 						list_tuple_hashtags_relations = list_tuple_hashtags_relations + process_hashtags_relations(tweet_text)
 						if timestamp:							
 							str_date = datetime.datetime.fromtimestamp(int(timestamp)).strftime('%d/%m/%Y') # date STRING in the format DD/MM/YYYY
@@ -197,28 +197,27 @@ def main(input_file='tweets_FIXED.csv', delimiter=DEFAULT_INPUT_DELIMITER, outpu
 							dates[datetime.datetime.fromtimestamp(int(timestamp)).strftime('%d/%m/%Y')] += 1
 							timestamp = datetime.datetime.fromtimestamp(int(timestamp))
 							timestamp_list.append(timestamp)
-					except:				
+					except ValueError:				
 						timestamp = ''
+						int_incorrect_timestamps += 1
 
-					try:
-						if line[8] == 'Point': 
-						# Lines where the eighth column is 'Point' have 
-						# geographical data on columns 9(latitude) and 10(longitute).
-						# Sometimes this data is corrupted by YourTwapperKeeper,
-						# this is why this clause is in a "try" block.
-							users_position[username] = (line[9],line[10])
-					except: 
-						pass
+					# Lines where the eighth column is 'Point' have 
+					# geographical data on columns 9(latitude) and 10(longitute).
+					# Sometimes this data is corrupted by YourTwapperKeeper,
+					# this is why this clause is in a "try" block.
+					if line[8] == 'Point':					
+						dict_tuple_users_positions[str_username] = (line[9],line[10])							
 
 					read_tweet_text(tweet_text, str_username, dict_int_words, dict_set_urls, dict_set_hashtags, dict_set_mentions,words_per_time, timestamp)
-				line_num = line_num + 1
+				
 
 		except UnicodeDecodeError:
 				print(line)
-				error_parsing(line_num)
+				error_parsing(csv_in.line_num)
 		except IndexError:
 				print(line)
-				print("Erro na linha:" + str(line_num))
+				print("Erro in the line:" + str(csv_in.line_num))
+		int_total_line_num = csv_in.line_num		
 
 	# Sets the hashtag dict entry count as the length of the set of different users that tweeted it.
 	for key, list_of_users in dict_set_hashtags.items():
@@ -229,7 +228,7 @@ def main(input_file='tweets_FIXED.csv', delimiter=DEFAULT_INPUT_DELIMITER, outpu
 		dict_int_mentions[key] = len(list_of_users)
 	
 	# Writing the CSV's of all that was calculated.
-	locations_to_csv(users_position)
+	locations_to_csv(dict_tuple_users_positions)
 	hashtags_relations_to_csv(list_tuple_hashtags_relations)
 	
 	top_something_to_csv(dict_set_urls, 'top_urls.csv', ['urls', 'distinct_users'], 
@@ -281,6 +280,10 @@ def main(input_file='tweets_FIXED.csv', delimiter=DEFAULT_INPUT_DELIMITER, outpu
 	# Calling the bash script to create a RESULTS folder, move all 
 	# the files generated there and delete the tweets_FIXED.csv file.
 	cleanup()
+
+	print("Number of tweets read: "+ str(int_total_line_num) + ".")
+	print("Number of corrupted timestamps: "+ str(int_incorrect_timestamps) + ".")
+	print("Number of users with location coordinates: "+ str(len(dict_tuple_users_positions.keys())) + ".")
 
 if __name__ == '__main__':	
 	main()
