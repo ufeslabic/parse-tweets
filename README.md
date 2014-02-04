@@ -42,15 +42,15 @@ Some pipe delimited csv's:
 
 * top_tweets.csv: top tweets ordered by number of RT's
 
-* urls.csv: urls with the number of distinct users that mentioned it
+* top_urls.csv: urls with the number of distinct users that mentioned it
+
+* top_words.csv: file with the most 1000 mentioned words;
 
 * users_activity.csv: contains the number of tweets per user
 
 * users_by_date.csv: contains the number of users per day
 
 * words_per_period: table with a timeline of the top 10(default) words in a given dataset
-
-* top_words.csv: file with the most 1000 mentioned words;
 
 One comma delimited CSV:
 
