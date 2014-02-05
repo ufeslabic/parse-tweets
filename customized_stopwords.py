@@ -3,7 +3,9 @@
 """ 
 This module contains a constantly changing list of stopwords 
 to be used by the script. Feel free to add more words relevant 
-to your needs(or dataset).
+to your needs(or dataset). 
+
+You can also use python-nltk to get some stopwords for your language.
 """
 
 portuguese_common_words = ['a', 
