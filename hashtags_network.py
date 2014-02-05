@@ -7,7 +7,7 @@ It is an experimental feature.
 """
 import csv
 import itertools
-from lib_cleaning import remove_punctuation
+from lib_text import remove_punctuation
 from lib_output import DEFAULT_OUTPUT_DELIMITER
 
 def get_hashtags(str_text):

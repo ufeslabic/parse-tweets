@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-DEFAULT_OUTPUT_DELIMITER = '|'
-DEFAULT_INPUT_DELIMITER = '|'
 
 import csv
 import sys
@@ -9,12 +7,13 @@ from collections import defaultdict
 
 from hashtags_network import hashtags_relations_to_csv
 from hashtags_network import process_hashtags_relations
-from lib_cleaning import remove_punctuation, CUSTOMIZED_STOPWORDS
+
 from lib_input import DEFAULT_INPUT_DELIMITER, cleanup, get_cluster_usernames 
 from lib_input import options_parser, remove_null_byte
 from lib_output import top_something_to_csv, hashtags_relations_to_csv
 from lib_output import dict_to_txt_for_wordle, locations_to_csv
-from lib_twitter import is_hashtag, is_mention, is_valid_twitter_short_url
+from lib_text import remove_punctuation, is_stopword, is_hashtag, is_URL
+from lib_text import is_twitter_mention, is_valid_twitter_short_url
 
 from lib_time import *
 
@@ -64,7 +63,7 @@ def handle_common_words(str_word, dict_int_words):
 	if str_word is not None:
 		str_word = str_word.lower()
 		#after the word was cleaned, it may have 0 letters i.e: if the word was ";)"
-		if str_word not in CUSTOMIZED_STOPWORDS and len(str_word) > 1: 
+		if (not is_stopword(str_word)) and len(str_word) > 1:
 			dict_int_words[str_word] += 1
 	
 # part of the new feature, not yet finished	
@@ -79,12 +78,12 @@ def count_users_by_date(dict_int_users_by_date, str_date, str_username):
 		dict_int_users_by_date[str_date] = set([str_username])
 
 # part of the new feature, not yet finished
-def add_word_on_timeline(str_word, words_per_time, timestamp):
+def add_word_to_timeline(str_word, words_per_time, timestamp):
 	if timestamp is not '':
 		str_word = remove_punctuation(str_word)
 		if str_word is not None:
 			str_word = str_word.lower()
-			if str_word not in CUSTOMIZED_STOPWORDS and len(str_word) > 1:
+			if (not is_stopword(str_word)) and len(str_word) > 1:
 				try:
 					words_per_time[str_word].append(timestamp)
 				except KeyError:
@@ -96,19 +95,21 @@ def read_tweet_text(tweet_text, str_username, words, dict_set_urls, dict_set_has
 	Reads each string in a tweet. If a string isn't an URL, a mention 
 	or a hashtag it can be a smiley face, pure punctuation or 
 	just a regular word.
+	About this function signature and others around here...yes, we know python can look in the "above" function namespace 
+	to find a variable, but it is more human friendly this way.
 	"""
 	tweet_words = tweet_text.split()
 	for str_word in tweet_words:
 		if len(str_word) > 1 and not str_word.endswith('…'): # if it ends in '…' the tweet was truncated by YTK
-			if str_word.startswith("ht") or str_word.startswith('hr'):
+			if is_URL(str_word):
 				handle_urls(str_word, dict_set_urls, str_username)
 			elif is_hashtag(str_word):
 				handle_hashtags(str_word, dict_set_hashtags, str_username)
-			elif is_mention(str_word):
+			elif is_twitter_mention(str_word):
 				handle_mentions(str_word, dict_set_mentions, str_username)
 			else:
 				handle_common_words(str_word, words)
-				add_word_on_timeline(str_word, words_per_time, timestamp)
+				add_word_to_timeline(str_word, words_per_time, timestamp)
 
 def main(input_file='tweets_FIXED.csv'):
 	"""
@@ -176,14 +177,14 @@ def main(input_file='tweets_FIXED.csv'):
 	# counter for the number of corrupted lines
 	int_corrupted_lines = 0
 	
-	# The "Words timeline" feature is not entirely finished nor documented.
+	# The "Words timeline" feature is finished nor documented.
 	timestamp_list =[]
 	words_per_time = {}	
 	number_of_topwords = terminal_options['number_of_words']	
 	
 	with open(input_file, 'rt', encoding="utf8") as csvfile:
 		try:
-			csv_in = csv.reader(csvfile, delimiter=DEFAULT_INPUT_DELIMITER)
+			csv_in = csv.reader(csvfile, delimiter=DEFAULT_INPUT_DELIMITER, quoting=csv.QUOTE_NONE)
 			next(csv_in) #Skips the line with the column titles.
 			for line in csv_in:
 				if len(line) is 13:
@@ -283,16 +284,14 @@ def main(input_file='tweets_FIXED.csv'):
 
 	# Writing the word timeline.
 	timeline(words_per_time, get_N_first(dict_int_words, number_of_topwords), timestamp_list)
+	
+	print(str(int_total_line_num) + "\t lines read.")
+	print(str(len(dict_tuple_users_positions.keys())) + "\t lweets with geolocation data.")
+	print(str(int_corrupted_lines) + "\t corrupted lines in this dataset.")	
 
 	# Calling the bash script to create a RESULTS folder, move all 
 	# the files generated there and delete the tweets_FIXED.csv file.
-	cleanup()
-
-	print("Number of lines read: "+ str(int_total_line_num) + ".")
-	print("Number of users with location coordinates: "+ str(len(dict_tuple_users_positions.keys())) + ".")
-	print("Number of corrupted lines: "+ str(int_corrupted_lines) + ".")
-	print("Number of corrupted timestamps: "+ str(int_incorrect_timestamps) + ".")
-	
+	cleanup()	
 
 if __name__ == '__main__':	
 	main()
