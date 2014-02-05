@@ -7,7 +7,6 @@ from collections import defaultdict
 
 from hashtags_network import hashtags_relations_to_csv
 from hashtags_network import process_hashtags_relations
-
 from lib_input import DEFAULT_INPUT_DELIMITER, cleanup, get_cluster_usernames 
 from lib_input import options_parser, remove_null_byte
 from lib_output import top_something_to_csv, hashtags_relations_to_csv
@@ -214,7 +213,8 @@ def main(input_file='tweets_FIXED.csv'):
 						# this is why this clause is in a "try" block.
 						if line[8] == 'Point':					
 							dict_tuple_users_positions[str_username] = (line[9],line[10])
-							read_tweet_text(tweet_text, str_username, dict_int_words, dict_set_urls, dict_set_hashtags, dict_set_mentions,words_per_time, timestamp)
+
+						read_tweet_text(tweet_text, str_username, dict_int_words, dict_set_urls, dict_set_hashtags, dict_set_mentions,words_per_time, timestamp)
 				else:
 					int_corrupted_lines += 1
 						
