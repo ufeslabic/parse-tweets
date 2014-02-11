@@ -30,6 +30,27 @@ UNDESIRED_CHARACTERS.add('“')
 UNDESIRED_CHARACTERS.add('‘')
 UNDESIRED_CHARACTERS.add('…')
 
+PUNCTUATION_REPLACEMENTS = {}
+
+for punctuation_char in UNDESIRED_CHARACTERS:
+    PUNCTUATION_REPLACEMENTS[ord(punctuation_char)] = None
+
+ACCENT_REPLACEMENTS = {
+    ord('á'):'a',
+    ord('à'):'a',
+    ord('é'):'e',
+    ord('í'):'i',
+    ord('ó'):'o',
+    ord('ú'):'u'
+}
+
+def remove_accents(str_string):
+    """ 
+    This function replaces characters with accents with non 
+    accented characters.
+    """
+    return str_string.translate(ACCENT_REPLACEMENTS)
+
 def remove_punctuation(str_string):
     """ 
     This function iterates through each character in 'str_string'
@@ -37,11 +58,7 @@ def remove_punctuation(str_string):
     'UNDESIRED_CHARACTERS' set. It returns the given string without 
     the UNDESIRED_CHARACTERS or None if the resulting string is empty.
     """
-    str_clean_string = ''.join(character for character in str_string if character not in UNDESIRED_CHARACTERS)
-    if str_clean_string == '':
-        return None
-    else:
-        return str_clean_string
+    return str_string.translate(PUNCTUATION_REPLACEMENTS)
 
 def is_stopword(str_string):
     """ Returns True if str_string is the stopwords list or False if not. """

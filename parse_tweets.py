@@ -12,7 +12,7 @@ from lib_input import options_parser, remove_null_byte
 from lib_output import top_something_to_csv, hashtags_relations_to_csv
 from lib_output import dict_to_txt_for_wordle, locations_to_csv
 from lib_text import remove_punctuation, is_stopword, is_hashtag, is_URL
-from lib_text import is_twitter_mention, is_valid_twitter_short_url
+from lib_text import is_twitter_mention, is_valid_twitter_short_url, remove_accents
 
 from lib_time import *
 
@@ -32,9 +32,10 @@ def handle_hashtags(str_hashtag, dict_set_hashtags, str_username):
 	Adds a hashtag to the hashtags dictionary. Each entry contains a set of 
 	users that tweeted the key hashtag.
 	"""
+	str_hashtag = str_hashtag.lower()
 	str_hashtag = remove_punctuation(str_hashtag)
-	if str_hashtag is not None:
-		str_hashtag = str_hashtag.lower()
+	str_hashtag = remove_accents(str_hashtag)
+	if str_hashtag is not None:		
 		try:
 			dict_set_hashtags[str_hashtag].add(str_username)
 		except KeyError:
