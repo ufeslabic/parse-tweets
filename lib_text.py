@@ -17,48 +17,46 @@ from customized_stopwords import portuguese_common_words
 """ 
 This list is defined in it's own file in order to make modifications 
 easier for non-programmers.
+Check python ntlk for better stopwords in your language.
 """
-CUSTOMIZED_STOPWORDS = set(portuguese_common_words) # check python ntlk for better stopwords in your language
+CUSTOMIZED_STOPWORDS = set(portuguese_common_words)
 
-""" 
-Characters to be excluded from the strings. Some characters not covered 
-by Python's string.punctuation were added as needed.
-"""
-UNDESIRED_CHARACTERS = set(string.punctuation)
-UNDESIRED_CHARACTERS.add('”')
-UNDESIRED_CHARACTERS.add('“')
-UNDESIRED_CHARACTERS.add('‘')
-UNDESIRED_CHARACTERS.add('…')
-
-PUNCTUATION_REPLACEMENTS = {}
-
-for punctuation_char in UNDESIRED_CHARACTERS:
-    PUNCTUATION_REPLACEMENTS[ord(punctuation_char)] = None
+VALID_CHARACTERS = string.ascii_letters + string.digits
 
 ACCENT_REPLACEMENTS = {
     ord('á'):'a',
     ord('à'):'a',
+    ord('è'):'e',
     ord('é'):'e',
     ord('í'):'i',
+    ord('ì'):'i',
+    ord('ò'):'o',
     ord('ó'):'o',
-    ord('ú'):'u'
+    ord('ù'):'u',
+    ord('ú'):'u',
+    ord('ü'):'u'
 }
 
-def remove_accents(str_string):
+def remove_latin_accents(str_string):
     """ 
-    This function replaces characters with accents with non 
-    accented characters.
+    This function replaces characters with accents 
+    with non accented characters.
     """
     return str_string.translate(ACCENT_REPLACEMENTS)
 
-def remove_punctuation(str_string):
-    """ 
-    This function iterates through each character in 'str_string'
-    and concatenate them in a new string if it is not in the 
-    'UNDESIRED_CHARACTERS' set. It returns the given string without 
-    the UNDESIRED_CHARACTERS or None if the resulting string is empty.
+def remove_invalid_characters(str_string):
     """
-    return str_string.translate(PUNCTUATION_REPLACEMENTS)
+    Removes all characters from a string that aren't 
+    letters or numbers. 
+    """
+    list_string_valid_chars = []
+    for character in str_string:
+        if character in VALID_CHARACTERS:
+            list_string_valid_chars.append(character)
+    if len(list_string_valid_chars) == 0:
+        return None
+    else:
+        return ''.join(list_string_valid_chars)
 
 def is_stopword(str_string):
     """ Returns True if str_string is the stopwords list or False if not. """
@@ -84,7 +82,7 @@ def is_twitter_mention(str_s):
     A twitter mention is considered a string that startws with the "@"
     character.
     """
-    if str_s.startswith("@"):
+    if str_s.startswith("@") or str_s.startswith("＠"):
         return True
     else:
         return False

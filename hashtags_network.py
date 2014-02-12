@@ -7,7 +7,7 @@ It is an experimental feature.
 """
 import csv
 import itertools
-from lib_text import remove_punctuation
+from lib_text import remove_invalid_characters
 from lib_output import DEFAULT_OUTPUT_DELIMITER
 
 def get_hashtags(str_text):
@@ -20,7 +20,7 @@ def get_hashtags(str_text):
 	list_str_hashtags = []
 	for word in list_str_words:
 		if word.startswith("#") and not(word.endswith("…")): #checks if the word wasn't truncated by YTK
-			temp_word = remove_punctuation(word.lower())
+			temp_word = remove_invalid_characters(word.lower())
 			if temp_word is not None and len(temp_word) > 1:
 				list_str_hashtags.append("#" + temp_word)
 	return list_str_hashtags
@@ -32,7 +32,6 @@ def process_hashtags_relations(str_tweet_text):
 	for item in itertools.combinations(list_str_hashtags, 2):
 		list_hashtags_combinations.append([item[0], item[1]])
 	return(list_hashtags_combinations)
-
 
 def hashtags_relations_to_csv(list_tuple_hashtags, filename='hashtags_network.csv'):
 	"""

@@ -11,8 +11,8 @@ from lib_input import DEFAULT_INPUT_DELIMITER, cleanup, get_cluster_usernames
 from lib_input import options_parser, remove_null_byte
 from lib_output import top_something_to_csv, hashtags_relations_to_csv
 from lib_output import dict_to_txt_for_wordle, locations_to_csv
-from lib_text import remove_punctuation, is_stopword, is_hashtag, is_URL
-from lib_text import is_twitter_mention, is_valid_twitter_short_url, remove_accents
+from lib_text import remove_invalid_characters, is_stopword, is_hashtag, is_URL
+from lib_text import is_twitter_mention, is_valid_twitter_short_url, remove_latin_accents
 
 from lib_time import *
 
@@ -33,8 +33,8 @@ def handle_hashtags(str_hashtag, dict_set_hashtags, str_username):
 	users that tweeted the key hashtag.
 	"""
 	str_hashtag = str_hashtag.lower()
-	str_hashtag = remove_punctuation(str_hashtag)
-	str_hashtag = remove_accents(str_hashtag)
+	str_hashtag = remove_invalid_characters(str_hashtag)
+	str_hashtag = remove_latin_accents(str_hashtag)
 	if str_hashtag is not None:		
 		try:
 			dict_set_hashtags[str_hashtag].add(str_username)
@@ -46,7 +46,7 @@ def handle_mentions(str_mentioned_username, dict_set_mentions, username_that_men
 	Adds a mention to the mentions dictionary. Each entry contains a set of 
 	users that mentioned the key profile.
 	"""
-	str_mentioned_username = remove_punctuation(str_mentioned_username)
+	str_mentioned_username = remove_invalid_characters(str_mentioned_username)
 	if str_mentioned_username is not None:
 		str_mentioned_username = str_mentioned_username.lower()
 		try:
@@ -59,7 +59,7 @@ def handle_common_words(str_word, dict_int_words):
 	Inserts a word in the dictionary of word counts or increment the 
 	count if it already was used. 
 	"""
-	str_word = remove_punctuation(str_word)
+	str_word = remove_invalid_characters(str_word)
 	if str_word is not None:
 		str_word = str_word.lower()
 		#after the word was cleaned, it may have 0 letters i.e: if the word was ";)"
@@ -80,7 +80,7 @@ def count_users_by_date(dict_int_users_by_date, str_date, str_username):
 # part of the new feature, not yet finished
 def add_word_to_timeline(str_word, words_per_time, timestamp):
 	if timestamp is not '':
-		str_word = remove_punctuation(str_word)
+		str_word = remove_invalid_characters(str_word)
 		if str_word is not None:
 			str_word = str_word.lower()
 			if (not is_stopword(str_word)) and len(str_word) > 1:
