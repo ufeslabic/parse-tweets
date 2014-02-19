@@ -22,19 +22,30 @@ Check python ntlk for better stopwords in your language.
 CUSTOMIZED_STOPWORDS = set(portuguese_common_words)
 
 VALID_CHARACTERS = string.ascii_letters + string.digits
+#VALID_CHARACTERS = string.ascii_lowercase + string.digits
+EXTRA_CHARACTERS = "_-"
+VALID_CHARACTERS = VALID_CHARACTERS + EXTRA_CHARACTERS
+
+VALID_CHARACTERS_SET = set([])
+
+for character in VALID_CHARACTERS:
+    VALID_CHARACTERS_SET.add(character)
 
 ACCENT_REPLACEMENTS = {
     ord('á'):'a',
     ord('à'):'a',
     ord('è'):'e',
+    ord('ê'):'e',
     ord('é'):'e',
     ord('í'):'i',
     ord('ì'):'i',
     ord('ò'):'o',
     ord('ó'):'o',
+    ord('ô'):'o',
     ord('ù'):'u',
     ord('ú'):'u',
-    ord('ü'):'u'
+    ord('ü'):'u',
+    ord('ç'):'c'
 }
 
 def remove_latin_accents(str_string):
@@ -51,10 +62,10 @@ def remove_invalid_characters(str_string):
     """
     list_string_valid_chars = []
     for character in str_string:
-        if character in VALID_CHARACTERS:
+        if character in VALID_CHARACTERS_SET:
             list_string_valid_chars.append(character)
     if len(list_string_valid_chars) == 0:
-        return None
+        return ''
     else:
         return ''.join(list_string_valid_chars)
 

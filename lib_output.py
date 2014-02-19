@@ -10,7 +10,7 @@ The constants used in it are:
 """
 import csv
 import sys
-#from parse_tweets import DEFAULT_OUTPUT_DELIMITER
+
 DEFAULT_OUTPUT_DELIMITER = '|'
 
 MAX_WORDS_NUMBER_CSV = 1000

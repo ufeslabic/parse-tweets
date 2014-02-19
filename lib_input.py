@@ -13,7 +13,10 @@ User input includes:
 
 import csv
 import getopt
+import os
 import subprocess
+import shutil
+
 import sys
 
 DEFAULT_INPUT_DELIMITER = '|'
@@ -71,8 +74,35 @@ def remove_null_byte():
 
 def cleanup():
 	"""
-	Calls a bash script to remove the tweets_FIXED.csv
-	and moves the results to the RESULTS folder.
-	Yes, it can be done in Python, but is not a priority currently.
+	Cleanup after the script runs. A RESULTS folder is created and 
+	the generated files are moved there.
 	"""
-	subprocess.call(["sh", "cleanup.sh"])
+	str_destination = "RESULTS"
+	os.remove("tweets_FIXED.csv")
+
+	# Deletes the RESULTS folder, if there is one.	
+	try:
+		shutil.rmtree(str_destination)
+	except FileNotFoundError:
+		pass
+
+	# Creating the results folder.
+	os.mkdir(str_destination)
+
+	# Moving CSV files.
+	shutil.move('dates.csv', str_destination)
+	shutil.move('mentions.csv', str_destination)
+	shutil.move('hashtags.csv', str_destination)
+	shutil.move('locations.csv', str_destination)
+	shutil.move('top_urls.csv', str_destination)
+	shutil.move('top_words.csv', str_destination)
+	shutil.move('top_tweets.csv', str_destination)
+	shutil.move('users_by_date.csv', str_destination)
+	shutil.move('users_activity.csv', str_destination)
+	shutil.move('hashtags_network.csv', str_destination)
+	shutil.move('words_per_period.csv', str_destination)
+	
+	# Moving txt files.
+	shutil.move('top_words_wordle.txt', str_destination)
+	shutil.move('top_hashtags_wordle.txt', str_destination)
+	

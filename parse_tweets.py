@@ -7,8 +7,9 @@ from collections import defaultdict
 
 from hashtags_network import hashtags_relations_to_csv
 from hashtags_network import process_hashtags_relations
+from lib_file_fixing import file_fix
 from lib_input import DEFAULT_INPUT_DELIMITER, cleanup, get_cluster_usernames 
-from lib_input import options_parser, remove_null_byte
+from lib_input import options_parser
 from lib_output import top_something_to_csv, hashtags_relations_to_csv
 from lib_output import dict_to_txt_for_wordle, locations_to_csv
 from lib_text import remove_invalid_characters, is_stopword, is_hashtag, is_URL
@@ -34,34 +35,36 @@ def handle_hashtags(str_hashtag, dict_set_hashtags, str_username):
 	"""
 	str_hashtag = str_hashtag.lower()
 	str_hashtag = remove_invalid_characters(str_hashtag)
-	str_hashtag = remove_latin_accents(str_hashtag)
-	if str_hashtag is not None:		
+	if str_hashtag is not '':
+		#str_hashtag = str_hashtag.lower()
+		str_hashtag = remove_latin_accents(str_hashtag)
 		try:
 			dict_set_hashtags[str_hashtag].add(str_username)
 		except KeyError:
 			dict_set_hashtags[str_hashtag] = set([str_username])
 
-def handle_mentions(str_mentioned_username, dict_set_mentions, username_that_mentioned):
+def handle_mentions(str_mentioned_username, dict_set_mentions, str_username_that_mentioned):
 	"""
 	Adds a mention to the mentions dictionary. Each entry contains a set of 
 	users that mentioned the key profile.
 	"""
+	str_mentioned_username = str_mentioned_username.lower()
 	str_mentioned_username = remove_invalid_characters(str_mentioned_username)
-	if str_mentioned_username is not None:
-		str_mentioned_username = str_mentioned_username.lower()
+	if str_mentioned_username is not '':
+		#str_mentioned_username = str_mentioned_username.lower()
 		try:
-			dict_set_mentions[str_mentioned_username].add(username_that_mentioned)
+			dict_set_mentions[str_mentioned_username].add(str_username_that_mentioned)
 		except KeyError:
-			dict_set_mentions[str_mentioned_username] = set([username_that_mentioned])
+			dict_set_mentions[str_mentioned_username] = set([str_username_that_mentioned])
 
 def handle_common_words(str_word, dict_int_words):
 	""" 
 	Inserts a word in the dictionary of word counts or increment the 
 	count if it already was used. 
 	"""
+	str_word = str_word.lower()
 	str_word = remove_invalid_characters(str_word)
-	if str_word is not None:
-		str_word = str_word.lower()
+	if str_word is not '':		
 		#after the word was cleaned, it may have 0 letters i.e: if the word was ";)"
 		if (not is_stopword(str_word)) and len(str_word) > 1:
 			dict_int_words[str_word] += 1
@@ -111,11 +114,11 @@ def read_tweet_text(tweet_text, str_username, words, dict_set_urls, dict_set_has
 				handle_common_words(str_word, words)
 				add_word_to_timeline(str_word, words_per_time, timestamp)
 
-def main(input_file='tweets_FIXED.csv'):
+def main(input_file='tweets_FIXED_NO_DUPLICATES.csv'):
 	"""
 	Input file is set to 'tweets_FIXED' because it is the output of remove_null_byte()
 	"""
-	remove_null_byte()
+	file_fix('tweets.csv')
 	list_cluster_usernames = get_cluster_usernames()
 	terminal_options = options_parser(sys.argv)
 	
@@ -186,45 +189,48 @@ def main(input_file='tweets_FIXED.csv'):
 		try:
 			csv_in = csv.reader(csvfile, delimiter=DEFAULT_INPUT_DELIMITER, quoting=csv.QUOTE_NONE)
 			next(csv_in) #Skips the line with the column titles.
-			for line in csv_in:
-				if len(line) is 13:
-					str_username = line[2]
-					str_username = str_username.lower()
-					if (not list_cluster_usernames) or (str_username in list_cluster_usernames):
-						tweet_text = line[0]
-						tweets_count[tweet_text] += 1
-						dict_int_users_activity[str_username] += 1
-						try:
+			try:
+				for line in csv_in:
+					if len(line) is 13:
+						str_username = line[2]
+						str_username = str_username.lower()
+						if (not list_cluster_usernames) or (str_username in list_cluster_usernames):
+							tweet_text = line[0]
+							tweets_count[tweet_text] += 1
+							dict_int_users_activity[str_username] += 1
+							try:
+								# Sometimes this data is corrupted by YourTwapperKeeper,
+								# this is why this clause is in a "try" block.
+								timestamp = line[12]
+								list_tuple_hashtags_relations = list_tuple_hashtags_relations + process_hashtags_relations(tweet_text)
+								if timestamp:
+									str_date = datetime.datetime.fromtimestamp(int(timestamp)).strftime('%d/%m/%Y') # date STRING in the format DD/MM/YYYY
+									count_users_by_date(dict_int_users_by_date, str_date, str_username)
+									dates[datetime.datetime.fromtimestamp(int(timestamp)).strftime('%d/%m/%Y')] += 1
+									timestamp = datetime.datetime.fromtimestamp(int(timestamp))
+									timestamp_list.append(timestamp)
+							except ValueError:
+								timestamp = ''
+								int_incorrect_timestamps += 1
+							# Lines where the eighth column is 'Point' have 
+							# geographical data on columns 9(latitude) and 10(longitute).
 							# Sometimes this data is corrupted by YourTwapperKeeper,
 							# this is why this clause is in a "try" block.
-							timestamp = line[12]
-							list_tuple_hashtags_relations = list_tuple_hashtags_relations + process_hashtags_relations(tweet_text)
-							if timestamp:
-								str_date = datetime.datetime.fromtimestamp(int(timestamp)).strftime('%d/%m/%Y') # date STRING in the format DD/MM/YYYY
-								count_users_by_date(dict_int_users_by_date, str_date, str_username)
-								dates[datetime.datetime.fromtimestamp(int(timestamp)).strftime('%d/%m/%Y')] += 1
-								timestamp = datetime.datetime.fromtimestamp(int(timestamp))
-								timestamp_list.append(timestamp)
-						except ValueError:
-							timestamp = ''
-							int_incorrect_timestamps += 1
-						# Lines where the eighth column is 'Point' have 
-						# geographical data on columns 9(latitude) and 10(longitute).
-						# Sometimes this data is corrupted by YourTwapperKeeper,
-						# this is why this clause is in a "try" block.
-						if line[8] == 'Point':					
-							dict_tuple_users_positions[str_username] = (line[9],line[10])
+							if line[8] == 'Point':					
+								dict_tuple_users_positions[str_username] = (line[9],line[10])
 
-						read_tweet_text(tweet_text, str_username, dict_int_words, dict_set_urls, dict_set_hashtags, dict_set_mentions,words_per_time, timestamp)
-				else:
-					int_corrupted_lines += 1
-						
-		except UnicodeDecodeError:
+							read_tweet_text(tweet_text, str_username, dict_int_words, dict_set_urls, dict_set_hashtags, dict_set_mentions,words_per_time, timestamp)
+					else:
+						int_corrupted_lines += 1
+			
+			except (UnicodeDecodeError, IndexError):
 				print(line)
 				error_parsing(csv_in.line_num)
-		except IndexError:
-				print(line)
-				print("Error in the line:" + str(csv_in.line_num))
+
+		except (IOError, StopIteration):
+			print("Error opening some necessary files.")
+			print("Make sure you have a 'tweets.csv' file in this folder.")
+			print("Please ensure that you are not running the script as root.")
 
 		int_total_line_num = csv_in.line_num		
 
@@ -238,6 +244,7 @@ def main(input_file='tweets_FIXED.csv'):
 	
 	# Writing the CSV's of all that was calculated.
 	locations_to_csv(dict_tuple_users_positions)
+	
 	hashtags_relations_to_csv(list_tuple_hashtags_relations)
 	
 	top_something_to_csv(dict_set_urls, 'top_urls.csv', ['urls', 'distinct_users'], 
@@ -294,5 +301,5 @@ def main(input_file='tweets_FIXED.csv'):
 	# the files generated there and delete the tweets_FIXED.csv file.
 	cleanup()	
 
-if __name__ == '__main__':	
+if __name__ == '__main__':
 	main()
