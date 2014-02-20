@@ -22,7 +22,6 @@ Check python ntlk for better stopwords in your language.
 CUSTOMIZED_STOPWORDS = set(portuguese_common_words)
 
 VALID_CHARACTERS = string.ascii_letters + string.digits
-#VALID_CHARACTERS = string.ascii_lowercase + string.digits
 EXTRA_CHARACTERS = "_-"
 VALID_CHARACTERS = VALID_CHARACTERS + EXTRA_CHARACTERS
 
@@ -42,11 +41,35 @@ ACCENT_REPLACEMENTS = {
     ord('ò'):'o',
     ord('ó'):'o',
     ord('ô'):'o',
+    ord('õ'):'o',
     ord('ù'):'u',
     ord('ú'):'u',
     ord('ü'):'u',
     ord('ç'):'c'
 }
+
+"""
+Characters to be excluded from the strings. Some characters not covered
+by Python's string.punctuation were added as needed.
+"""
+UNDESIRED_CHARACTERS = set(string.punctuation)
+UNDESIRED_CHARACTERS.add('”')
+UNDESIRED_CHARACTERS.add('“')
+UNDESIRED_CHARACTERS.add('‘')
+UNDESIRED_CHARACTERS.add('…')
+
+def remove_punctuation(str_string):
+    """
+This function iterates through each character in 'str_string'
+and concatenate them in a new string if it is not in the
+'UNDESIRED_CHARACTERS' set. It returns the given string without
+the UNDESIRED_CHARACTERS, even if it is the empty string.
+"""
+    str_clean_string = ''.join(character for character in str_string if character not in UNDESIRED_CHARACTERS)
+    if str_clean_string == '':
+        return ''
+    else:
+        return str_clean_string
 
 def remove_latin_accents(str_string):
     """ 
