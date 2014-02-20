@@ -68,18 +68,6 @@ def locations_to_csv(dict_str_tuple, filename='locations.csv'):
 		csvfile.close()
 
 
-def hashtags_relations_to_csv(list_tuple_hashtags, filename='hashtags_network.csv'):
-	"""
-	Generates a file to be used by Gephi to create a graph of 
-	the relations between the hashtags.	
-	"""
-	with open(filename, 'w', newline='', encoding="utf8") as csvfile:
-		file_writer = csv.writer(csvfile, delimiter=DEFAULT_OUTPUT_DELIMITER, quotechar='"', quoting=csv.QUOTE_MINIMAL)
-		file_writer.writerow(['hashtag_1', 'hashtag_2'])
-		for hashtag_tuple in list_tuple_hashtags:
-			file_writer.writerow([hashtag_tuple[0], hashtag_tuple[1]])
-		csvfile.close()
-
 def top_something_to_csv(dict_in, filename, column_titles, reverse, sort_key_function, value_format_function=lambda t: t):
 	"""
 	Given a dictionary, a sorting function for it's keys
