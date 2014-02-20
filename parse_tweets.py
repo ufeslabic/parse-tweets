@@ -10,7 +10,7 @@ from hashtags_network import process_hashtags_relations
 from lib_file_fixing import file_fix
 from lib_input import DEFAULT_INPUT_DELIMITER, cleanup, get_cluster_usernames 
 from lib_input import options_parser
-from lib_output import top_something_to_csv, hashtags_relations_to_csv
+from lib_output import top_something_to_csv, locations_to_csv
 from lib_output import dict_to_txt_for_wordle, locations_to_csv
 from lib_text import remove_invalid_characters, is_stopword, is_hashtag, is_URL
 from lib_text import is_twitter_mention, is_valid_twitter_short_url, remove_latin_accents
@@ -202,7 +202,9 @@ def main(input_file='tweets_FIXED_NO_DUPLICATES.csv'):
 								# Sometimes this data is corrupted by YourTwapperKeeper,
 								# this is why this clause is in a "try" block.
 								timestamp = line[12]
-								list_tuple_hashtags_relations = list_tuple_hashtags_relations + process_hashtags_relations(tweet_text)
+								
+								# Append the relations between the hashtags found in the tweet to a list
+								list_tuple_hashtags_relations += process_hashtags_relations(tweet_text)
 								if timestamp:
 									str_date = datetime.datetime.fromtimestamp(int(timestamp)).strftime('%d/%m/%Y') # date STRING in the format DD/MM/YYYY
 									count_users_by_date(dict_int_users_by_date, str_date, str_username)
