@@ -101,6 +101,7 @@ def cleanup():
 	shutil.move('users_activity.csv', str_destination)
 	shutil.move('hashtags_network.csv', str_destination)
 	shutil.move('words_per_period.csv', str_destination)
+	shutil.move('tweets_with_links.csv', str_destination)
 	
 	# Moving txt files.
 	shutil.move('top_words_wordle.txt', str_destination)
