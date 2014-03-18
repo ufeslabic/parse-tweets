@@ -11,10 +11,10 @@ from lib_file_fixing import file_fix
 from lib_input import DEFAULT_INPUT_DELIMITER, cleanup, get_cluster_usernames 
 from lib_input import options_parser
 from lib_output import top_something_to_csv, locations_to_csv
-from lib_output import dict_to_txt_for_wordle, locations_to_csv
+from lib_output import dict_to_txt_for_wordle, locations_to_csv, write_tweets_with_links
 from lib_text import remove_invalid_characters, is_stopword, is_hashtag, is_URL
 from lib_text import is_twitter_mention, is_valid_twitter_short_url, remove_latin_accents
-from lib_text import remove_punctuation
+from lib_text import remove_punctuation, has_links
 
 from lib_time import *
 
@@ -182,15 +182,20 @@ def main(input_file='tweets_FIXED_NO_DUPLICATES.csv'):
 	# The "Words timeline" feature is finished nor documented.
 	timestamp_list =[]
 	words_per_time = {}	
-	number_of_topwords = terminal_options['number_of_words']	
+	number_of_topwords = terminal_options['number_of_words']
+
+	# Dictionary of tweets that have links
+	set_tup_str_tweets_with_links = set()
 	
 	with open(input_file, 'rt', encoding="utf8") as csvfile:
 		try:
 			csv_in = csv.reader(csvfile, delimiter=DEFAULT_INPUT_DELIMITER, quoting=csv.QUOTE_NONE)
-			next(csv_in) #Skips the line with the column titles.
+			lis_column_titles = next(csv_in) #Skips the line with the column titles.
 			try:
 				for line in csv_in:
 					if len(line) is 13:
+						if has_links(line[0]):							
+							set_tup_str_tweets_with_links.add(tuple(line))
 						str_username = line[2]
 						str_username = str_username.lower()
 						if (not list_cluster_usernames) or (str_username in list_cluster_usernames):
@@ -293,13 +298,14 @@ def main(input_file='tweets_FIXED_NO_DUPLICATES.csv'):
 
 	# Writing the word timeline.
 	timeline(words_per_time, get_N_first(dict_int_words, number_of_topwords), timestamp_list)
+
+	# Writing tweets that have links
+	write_tweets_with_links(set_tup_str_tweets_with_links, 'tweets_with_links.csv', column_titles=lis_column_titles)
 	
 	print(str(int_total_line_num) + "\t lines read.")
 	print(str(len(dict_tuple_users_positions.keys())) + "\t lweets with geolocation data.")
 	print(str(int_corrupted_lines) + "\t corrupted lines in this dataset.")	
 
-	# Calling the bash script to create a RESULTS folder, move all 
-	# the files generated there and delete the tweets_FIXED.csv file.
 	cleanup()	
 
 if __name__ == '__main__':
