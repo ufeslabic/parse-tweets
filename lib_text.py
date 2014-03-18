@@ -141,3 +141,9 @@ def is_valid_twitter_short_url(str_s):
         return True
     else:
         return False
+
+def has_links(str):
+    for word in str.split():
+        if word.startswith("ht") or word.startswith('hr'):
+            return True
+    return False
