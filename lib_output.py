@@ -67,7 +67,6 @@ def locations_to_csv(dict_str_tuple, filename='locations.csv'):
 			file_writer.writerow([value[0], value[1]])
 		csvfile.close()
 
-
 def top_something_to_csv(dict_in, filename, column_titles, reverse, sort_key_function, value_format_function=lambda t: t):
 	"""
 	Given a dictionary, a sorting function for it's keys
@@ -91,4 +90,16 @@ def error_parsing(line_num):
 	print("Error on line: "+ str(line_num))	
 	print("Error: Not all tweeted were read. Finishing execution...")
 	sys.exit()
+
+# Each element of this set is a tuple with all the line of the tweets.csv
+def write_tweets_with_links(set_tup_tweets_with_links, filename, column_titles):
+	with open(filename, 'w', newline='', encoding="utf8") as csvfile:
+		file_writer = csv.writer(csvfile, delimiter=DEFAULT_OUTPUT_DELIMITER, quotechar='"', quoting=csv.QUOTE_MINIMAL)
+		file_writer.writerow(column_titles)
+		for element in set_tup_tweets_with_links:
+			file_writer.writerow(list(element))
+
+
+
+
 
