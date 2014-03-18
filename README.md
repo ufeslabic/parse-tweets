@@ -10,7 +10,6 @@ After the tweets are archived, you can dump then in some formats. This script sp
 ------------------
 Requirements:
 ------------------
-* Linux
 * Python 3.3
 
 ------------------
@@ -45,6 +44,8 @@ Some pipe delimited csv's:
 * top_urls.csv: urls with the number of distinct users that mentioned it
 
 * top_words.csv: file with the most 1000 mentioned words;
+
+* tweets_with_links.csv: CSV file similar to the input tweets.csv, but only has the tweets from "tweets.csv" that have links;
 
 * users_activity.csv: contains the number of tweets per user
 
