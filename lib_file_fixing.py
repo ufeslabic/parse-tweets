@@ -47,7 +47,7 @@ def remove_duplicate_lines(str_input_filename='tweets_FIXED.csv'):
     # to be inserted nothing will happen.
     set_tuple_valid_lines = set()
     int_total_lines = 0
-    int_total_valid_lines = 0
+    int_total_valid_lines = 1 #to account for the headers
     with open(str_input_filename, 'rt', encoding="utf8") as csvfile:
         csv_in = csv.reader(csvfile, delimiter=DEFAULT_INPUT_DELIMITER, quoting=csv.QUOTE_NONE)
         # Saving the first line, because sets aren't ordered.
@@ -55,7 +55,6 @@ def remove_duplicate_lines(str_input_filename='tweets_FIXED.csv'):
 
         # Adding all the lines in the set.
         for line in csv_in:
-
             if len(line) is 13:
                 int_total_valid_lines += 1
                 set_tuple_valid_lines.add(tuple(line))
@@ -63,8 +62,8 @@ def remove_duplicate_lines(str_input_filename='tweets_FIXED.csv'):
     int_total_valid_lines_non_duplicate = len(set_tuple_valid_lines) + 1 #to account for the column titles
     str_fixed_filename = filename_append(str_input_filename, '_NO_DUPLICATES')
     
-    print(str(int_total_lines) + "\t lines before cleaning.")
-    print(str(int_total_lines - int_total_valid_lines_non_duplicate) + "\t duplicate lines.")
+    print(str(int_total_valid_lines) + "\t lines before cleaning.")
+    print(str(int_total_valid_lines - int_total_valid_lines_non_duplicate) + "\t duplicate lines.")
     
     # Writing all the exclusive lines
     with open(str_fixed_filename, 'w', newline='', encoding="utf8") as csvfile:
