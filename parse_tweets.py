@@ -8,13 +8,13 @@ from collections import defaultdict
 from hashtags_network import hashtags_relations_to_csv
 from hashtags_network import process_hashtags_relations
 from lib_file_fixing import file_fix
-from lib_input import DEFAULT_INPUT_DELIMITER, cleanup, get_cluster_usernames 
+from lib_input import DEFAULT_INPUT_DELIMITER, cleanup, load_filter_list
 from lib_input import options_parser
 from lib_output import top_something_to_csv, locations_to_csv
-from lib_output import dict_to_txt_for_wordle, locations_to_csv, write_tweets_with_links
+from lib_output import dict_to_txt_for_wordle, locations_to_csv, write_set_of_tuples
 from lib_text import remove_invalid_characters, is_stopword, is_hashtag, is_URL
 from lib_text import is_twitter_mention, is_valid_twitter_short_url, remove_latin_accents
-from lib_text import remove_punctuation, has_links
+from lib_text import remove_punctuation, has_links, is_the_only_hashtag_in_text
 
 from lib_time import *
 
@@ -118,7 +118,11 @@ def main(input_file='tweets_FIXED_NO_DUPLICATES.csv'):
 	Input file is set to 'tweets_FIXED' because it is the output of remove_null_byte()
 	"""
 	file_fix('tweets.csv')
-	list_cluster_usernames = get_cluster_usernames()
+	set_cluster_usernames = set(load_filter_list('cluster_usernames.csv'))
+	try:
+		str_target_hashtag = load_filter_list('specific_hashtags.csv')[0]
+	except IndexError:
+		str_target_hashtag = None
 	terminal_options = options_parser(sys.argv)
 	
 	# Dictionary of URLS where each entry contains a set of distinct 
@@ -184,8 +188,15 @@ def main(input_file='tweets_FIXED_NO_DUPLICATES.csv'):
 	words_per_time = {}	
 	number_of_topwords = terminal_options['number_of_words']
 
-	# Dictionary of tweets that have links
+	# Set of tweets that have links
 	set_tup_str_tweets_with_links = set()
+
+	# Set of tweets that aren't RT's
+	set_tup_without_RT_tweets = set()
+
+	# Set of tweets with only the specified hashtag
+	set_tup_tweets_specific_hashtag = set()
+
 	
 	with open(input_file, 'rt', encoding="utf8") as csvfile:
 		try:
@@ -194,38 +205,50 @@ def main(input_file='tweets_FIXED_NO_DUPLICATES.csv'):
 			try:
 				for line in csv_in:
 					if len(line) is 13:
-						if has_links(line[0]):							
-							set_tup_str_tweets_with_links.add(tuple(line))
 						str_username = line[2]
 						str_username = str_username.lower()
-						if (not list_cluster_usernames) or (str_username in list_cluster_usernames):
+						if (not set_cluster_usernames) or (str_username in list_cluster_usernames):
+							#saving the tweet if it has a link
+							if has_links(line[0]):
+								set_tup_str_tweets_with_links.add(tuple(line))
+
 							tweet_text = line[0]
-							tweets_count[tweet_text] += 1
-							dict_int_users_activity[str_username] += 1
-							try:
+							if (not str_target_hashtag) or (is_the_only_hashtag_in_text(str_target_hashtag, tweet_text)):
+
+								#saving the tweet if it as RT
+								if not tweet_text.startswith("RT"):
+									set_tup_without_RT_tweets.add(tuple(line))
+
+								# Set of tweets with only the specified hashtag
+								if (str_target_hashtag):
+									set_tup_tweets_specific_hashtag.add(tuple(line))
+
+								tweets_count[tweet_text] += 1
+								dict_int_users_activity[str_username] += 1
+								try:
+									# Sometimes this data is corrupted by YourTwapperKeeper,
+									# this is why this clause is in a "try" block.
+									timestamp = line[12]
+									
+									# Append the relations between the hashtags found in the tweet to a list
+									list_tuple_hashtags_relations += process_hashtags_relations(tweet_text)
+									if timestamp:
+										str_date = datetime.datetime.fromtimestamp(int(timestamp)).strftime('%d/%m/%Y') # date STRING in the format DD/MM/YYYY
+										count_users_by_date(dict_int_users_by_date, str_date, str_username)
+										dates[datetime.datetime.fromtimestamp(int(timestamp)).strftime('%d/%m/%Y')] += 1
+										timestamp = datetime.datetime.fromtimestamp(int(timestamp))
+										timestamp_list.append(timestamp)
+								except ValueError:
+									timestamp = ''
+									int_incorrect_timestamps += 1
+								# Lines where the eighth column is 'Point' have 
+								# geographical data on columns 9(latitude) and 10(longitute).
 								# Sometimes this data is corrupted by YourTwapperKeeper,
 								# this is why this clause is in a "try" block.
-								timestamp = line[12]
-								
-								# Append the relations between the hashtags found in the tweet to a list
-								list_tuple_hashtags_relations += process_hashtags_relations(tweet_text)
-								if timestamp:
-									str_date = datetime.datetime.fromtimestamp(int(timestamp)).strftime('%d/%m/%Y') # date STRING in the format DD/MM/YYYY
-									count_users_by_date(dict_int_users_by_date, str_date, str_username)
-									dates[datetime.datetime.fromtimestamp(int(timestamp)).strftime('%d/%m/%Y')] += 1
-									timestamp = datetime.datetime.fromtimestamp(int(timestamp))
-									timestamp_list.append(timestamp)
-							except ValueError:
-								timestamp = ''
-								int_incorrect_timestamps += 1
-							# Lines where the eighth column is 'Point' have 
-							# geographical data on columns 9(latitude) and 10(longitute).
-							# Sometimes this data is corrupted by YourTwapperKeeper,
-							# this is why this clause is in a "try" block.
-							if line[8] == 'Point':					
-								dict_tuple_users_positions[str_username] = (line[9],line[10])
+								if line[8] == 'Point':					
+									dict_tuple_users_positions[str_username] = (line[9],line[10])
 
-							read_tweet_text(tweet_text, str_username, dict_int_words, dict_set_urls, dict_set_hashtags, dict_set_mentions,words_per_time, timestamp)
+								read_tweet_text(tweet_text, str_username, dict_int_words, dict_set_urls, dict_set_hashtags, dict_set_mentions,words_per_time, timestamp)
 					else:
 						int_corrupted_lines += 1
 			
@@ -300,7 +323,14 @@ def main(input_file='tweets_FIXED_NO_DUPLICATES.csv'):
 	timeline(words_per_time, get_N_first(dict_int_words, number_of_topwords), timestamp_list)
 
 	# Writing tweets that have links
-	write_tweets_with_links(set_tup_str_tweets_with_links, 'tweets_with_links.csv', column_titles=lis_column_titles)
+	write_set_of_tuples(set_tup_str_tweets_with_links, 'tweets_with_links.csv', column_titles=lis_column_titles)
+
+	# Writing tweets that have links
+	write_set_of_tuples(set_tup_without_RT_tweets, 'tweets_without_RTs.csv', column_titles=lis_column_titles)
+
+	# Writing tweets that have links
+	write_set_of_tuples(set_tup_tweets_specific_hashtag, 'tweets_of_a_specific_hashtag.csv', column_titles=lis_column_titles)
+
 	
 	print(str(int_total_line_num) + "\t lines read.")
 	print(str(len(dict_tuple_users_positions.keys())) + "\t lweets with geolocation data.")
