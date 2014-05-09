@@ -41,27 +41,25 @@ def options_parser(argv):
 		arguments['number_of_words'] = NUMBER_OF_WORDS_FOR_TIMELINE # setting default number of words	
 	return(arguments)
 
-
-def get_cluster_usernames():
+def load_filter_list(filename):
 	""" 
 	Reads a cluster_usernames.csv file if present and returns a 
 	list of the usernames in it. If no username is in the file, 
 	or the file is not present, it returns an empty list.
 	"""
-	usernames = set([])
+	filter_strings = []
 	try:
-		with open('cluster_usernames.csv', 'rt', encoding="utf8") as csvfile:
+		with open(filename, 'rt', encoding="utf8") as csvfile:
 			csv_in = csv.reader(csvfile, delimiter='|', quotechar='"')
 			next(csv_in)
 			for line in csv_in:
-				usernames.add(line[0])
+				filter_strings.append(line[0])
 	except :
-		usernames = {}
-	if len(usernames) == 0:
-		return {}
-	else:
-		print("Loaded usernames from 'cluster_usernames.csv' file.")
-		return usernames
+		filter_strings = {}
+	if len(filter_strings) == 0:
+		return []
+	else:		
+		return filter_strings
 
 def remove_null_byte():
 	"""
@@ -100,9 +98,16 @@ def cleanup():
 	shutil.move('users_by_date.csv', str_destination)
 	shutil.move('users_activity.csv', str_destination)
 	shutil.move('hashtags_network.csv', str_destination)
-	shutil.move('words_per_period.csv', str_destination)
+
 	shutil.move('tweets_with_links.csv', str_destination)
+	shutil.move('tweets_without_RTs.csv', str_destination)
+	shutil.move('tweets_of_a_specific_hashtag.csv', str_destination)
 	
+	try:	
+		shutil.move('words_per_period.csv', str_destination)
+	except FileNotFoundError:
+		pass
+
 	# Moving txt files.
 	shutil.move('top_words_wordle.txt', str_destination)
 	shutil.move('top_hashtags_wordle.txt', str_destination)
