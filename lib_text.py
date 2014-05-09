@@ -147,3 +147,15 @@ def has_links(str):
         if word.startswith("ht") or word.startswith('hr'):
             return True
     return False
+
+def is_the_only_hashtag_in_text(str_hashtag, str_text_to_search):
+    lis_str_hashtags = []
+    str_words_in_tweet = str_text_to_search.split()
+    for str_word in str_words_in_tweet:
+        if str_word.startswith("#"):
+            lis_str_hashtags.append(str_word)
+    if (len(lis_str_hashtags) == 1) and (str_hashtag in lis_str_hashtags):
+        return True
+    else:
+        return False
+
