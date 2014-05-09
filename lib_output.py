@@ -77,7 +77,9 @@ def top_something_to_csv(dict_in, filename, column_titles, reverse, sort_key_fun
 	ordered_list = []
 	for key, value in dict_in.items():
 		ordered_list.append([key, value_format_function(value)])
+
 	ordered_list = sorted(ordered_list, key=sort_key_function, reverse=reverse)
+
 	with open(filename, 'w', newline='', encoding="utf8") as csvfile:
 		file_writer = csv.writer(csvfile, delimiter=DEFAULT_OUTPUT_DELIMITER, quotechar='"', quoting=csv.QUOTE_MINIMAL)	
 		file_writer.writerow(column_titles)
@@ -91,12 +93,12 @@ def error_parsing(line_num):
 	print("Error: Not all tweeted were read. Finishing execution...")
 	sys.exit()
 
-# Each element of this set is a tuple with all the line of the tweets.csv
-def write_tweets_with_links(set_tup_tweets_with_links, filename, column_titles):
+# write a set to CSV
+def write_set_of_tuples(set_tup_input, filename, column_titles):
 	with open(filename, 'w', newline='', encoding="utf8") as csvfile:
 		file_writer = csv.writer(csvfile, delimiter=DEFAULT_OUTPUT_DELIMITER, quotechar='"', quoting=csv.QUOTE_MINIMAL)
 		file_writer.writerow(column_titles)
-		for element in set_tup_tweets_with_links:
+		for element in set_tup_input:
 			file_writer.writerow(list(element))
 
 
