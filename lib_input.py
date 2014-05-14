@@ -91,6 +91,7 @@ def cleanup():
 	shutil.move('dates.csv', str_destination)
 	shutil.move('mentions.csv', str_destination)
 	shutil.move('hashtags.csv', str_destination)
+	shutil.move('hashtags_without_accents.csv', str_destination) #Added 14/05/2014
 	shutil.move('locations.csv', str_destination)
 	shutil.move('top_urls.csv', str_destination)
 	shutil.move('top_words.csv', str_destination)
@@ -111,4 +112,5 @@ def cleanup():
 	# Moving txt files.
 	shutil.move('top_words_wordle.txt', str_destination)
 	shutil.move('top_hashtags_wordle.txt', str_destination)
+	shutil.move('top_hashtags_without_accents_wordle.txt', str_destination) #Added 14/05/2014
 	

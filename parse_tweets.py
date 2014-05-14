@@ -14,9 +14,21 @@ from lib_output import top_something_to_csv, locations_to_csv
 from lib_output import dict_to_txt_for_wordle, locations_to_csv, write_set_of_tuples
 from lib_text import remove_invalid_characters, is_stopword, is_hashtag, is_URL
 from lib_text import is_twitter_mention, is_valid_twitter_short_url, remove_latin_accents
-from lib_text import remove_punctuation, has_links, is_the_only_hashtag_in_text
+from lib_text import remove_punctuation, has_links, is_the_only_hashtag_in_text, remove_latin_accents
 
 from lib_time import *
+
+def dict_of_int_from_dict_of_lists(dict_of_lists):
+	"""
+	From a given dictionary where each value is a list of something
+	creates an int_dictionary where the keys are the same that of the argument dict
+	but the values are the length of the lists in this keys.
+	Added: 14/05/2014
+	"""
+	dict_of_ints = defaultdict(int)
+	for key, list_of_strings in dict_of_lists.items():
+		dict_of_ints[key] = len(list_of_strings)
+	return dict_of_ints
 
 def handle_urls(str_url, dict_set_urls, str_username):
 	"""
@@ -29,18 +41,21 @@ def handle_urls(str_url, dict_set_urls, str_username):
 		except KeyError:
 			dict_set_urls[str_url] = set([str_username])
 
-def handle_hashtags(str_hashtag, dict_set_hashtags, str_username):
+def handle_hashtags(str_hashtag, str_username, dict_set_hashtags, dict_set_hashtags_without_accents):
 	"""
 	Adds a hashtag to the hashtags dictionary. Each entry contains a set of 
 	users that tweeted the key hashtag.
 	"""
 	str_hashtag = str_hashtag.lower()
 	str_hashtag = remove_punctuation(str_hashtag)
+	str_hashtag_without_accents = remove_latin_accents(str_hashtag)
 	if str_hashtag is not '':
 		try:
 			dict_set_hashtags[str_hashtag].add(str_username)
+			dict_set_hashtags_without_accents[str_hashtag_without_accents].add(str_username)
 		except KeyError:
 			dict_set_hashtags[str_hashtag] = set([str_username])
+			dict_set_hashtags_without_accents[str_hashtag_without_accents] = set([str_username])
 
 def handle_mentions(str_mentioned_username, dict_set_mentions, str_username_that_mentioned):
 	"""
@@ -92,7 +107,7 @@ def add_word_to_timeline(str_word, words_per_time, timestamp):
 					words_per_time[str_word] = [timestamp]
 
 def read_tweet_text(tweet_text, str_username, words, dict_set_urls, dict_set_hashtags, 
-	dict_set_mentions, words_per_time, timestamp):
+	dict_set_hashtags_without_accents, dict_set_mentions, words_per_time, timestamp):
 	"""
 	Reads each string in a tweet. If a string isn't an URL, a mention 
 	or a hashtag it can be a smiley face, pure punctuation or 
@@ -106,7 +121,7 @@ def read_tweet_text(tweet_text, str_username, words, dict_set_urls, dict_set_has
 			if is_URL(str_word):
 				handle_urls(str_word, dict_set_urls, str_username)
 			elif is_hashtag(str_word):
-				handle_hashtags(str_word, dict_set_hashtags, str_username)
+				handle_hashtags(str_word, str_username, dict_set_hashtags, dict_set_hashtags_without_accents)
 			elif is_twitter_mention(str_word):
 				handle_mentions(str_word, dict_set_mentions, str_username)
 			else:
@@ -133,7 +148,8 @@ def main(input_file='tweets_FIXED_NO_DUPLICATES.csv'):
 	# Dictionary of hashtags where each entry contains a set of distinct
 	#usernames that commented on this hashtag.
 	# entry example: 'chocolate' => ['johnDoe85','barack0','_b0btables', ...]
-	dict_set_hashtags = {}	
+	dict_set_hashtags = {}
+	dict_set_hashtags_without_accents = {}
 
 	# Dictionary of mentions where each entry contains a set of distinct 
 	# usernames that mentioned a profile.
@@ -160,6 +176,7 @@ def main(input_file='tweets_FIXED_NO_DUPLICATES.csv'):
 	# Dictionary with the number of distinct users that tweeted a hashtag. 
 	# entry example: 'beliebers' => 12
 	dict_int_hashtags = defaultdict(int)
+	dict_int_hashtags_without_accents = defaultdict(int)
 
 	# Dictionary with the number of distinct users that mentioned a profile. 
 	# entry example: '0bama' => 789
@@ -196,7 +213,6 @@ def main(input_file='tweets_FIXED_NO_DUPLICATES.csv'):
 
 	# Set of tweets with only the specified hashtag
 	set_tup_tweets_specific_hashtag = set()
-
 	
 	with open(input_file, 'rt', encoding="utf8") as csvfile:
 		try:
@@ -248,7 +264,7 @@ def main(input_file='tweets_FIXED_NO_DUPLICATES.csv'):
 								if line[8] == 'Point':					
 									dict_tuple_users_positions[str_username] = (line[9],line[10])
 
-								read_tweet_text(tweet_text, str_username, dict_int_words, dict_set_urls, dict_set_hashtags, dict_set_mentions,words_per_time, timestamp)
+								read_tweet_text(tweet_text, str_username, dict_int_words, dict_set_urls, dict_set_hashtags, dict_set_hashtags_without_accents, dict_set_mentions,words_per_time, timestamp)
 					else:
 						int_corrupted_lines += 1
 			
@@ -263,20 +279,17 @@ def main(input_file='tweets_FIXED_NO_DUPLICATES.csv'):
 
 		int_total_line_num = csv_in.line_num		
 
-	# Sets the hashtag dict entry count as the length of the set of different users that tweeted it.
-	for key, list_of_users in dict_set_hashtags.items():
-		dict_int_hashtags[key] = len(list_of_users)
 
-	# Sets the mention count as the length of the set of different users that mentioned it.
-	for key, list_of_users in dict_set_mentions.items():
-		dict_int_mentions[key] = len(list_of_users)
+	dict_int_hashtags = dict_of_int_from_dict_of_lists(dict_set_hashtags)
+	dict_int_hashtags_without_accents = dict_of_int_from_dict_of_lists(dict_set_hashtags_without_accents)
+	dict_int_mentions = dict_of_int_from_dict_of_lists(dict_set_mentions)
 	
 	# Writing the CSV's of all that was calculated.
 	locations_to_csv(dict_tuple_users_positions)
 	
 	hashtags_relations_to_csv(list_tuple_hashtags_relations)
 	
-	top_something_to_csv(dict_set_urls, 'top_urls.csv', ['urls', 'distinct_users'], 
+	top_something_to_csv(dict_set_urls, 'top_urls.csv', ['url', 'distinct_users'], 
 		reverse=True, 
 		sort_key_function=lambda t: t[1], 
 		value_format_function=lambda t: len(t))
@@ -290,7 +303,12 @@ def main(input_file='tweets_FIXED_NO_DUPLICATES.csv'):
 		reverse=False, 
 		sort_key_function=lambda t: datetime.date(int(t[0][6:]), int(t[0][3:5]), int(t[0][:2])))
 	
-	top_something_to_csv(dict_int_hashtags, 'hashtags.csv', ['hashtags', 'distinct_users_commenting'], 
+	top_something_to_csv(dict_int_hashtags, 'hashtags.csv', ['hashtag', 'distinct_users_commenting'], 
+		reverse=True, 
+		sort_key_function=lambda t: t[1], 
+		value_format_function=lambda t:t)
+
+	top_something_to_csv(dict_int_hashtags_without_accents, 'hashtags_without_accents.csv', ['hashtag', 'distinct_users_commenting'], 
 		reverse=True, 
 		sort_key_function=lambda t: t[1], 
 		value_format_function=lambda t:t)
@@ -318,6 +336,7 @@ def main(input_file='tweets_FIXED_NO_DUPLICATES.csv'):
 	# Writing the TXT's files of the wordclouds.
 	dict_to_txt_for_wordle(dict_int_words, 'top_words_wordle.txt', sort_key=lambda t:t[1])
 	dict_to_txt_for_wordle(dict_int_hashtags, 'top_hashtags_wordle.txt', sort_key=lambda t: t[1])
+	dict_to_txt_for_wordle(dict_int_hashtags_without_accents, 'top_hashtags_without_accents_wordle.txt', sort_key=lambda t: t[1])
 
 	# Writing the word timeline.
 	timeline(words_per_time, get_N_first(dict_int_words, number_of_topwords), timestamp_list)
@@ -330,10 +349,9 @@ def main(input_file='tweets_FIXED_NO_DUPLICATES.csv'):
 
 	# Writing tweets that have links
 	write_set_of_tuples(set_tup_tweets_specific_hashtag, 'tweets_of_a_specific_hashtag.csv', column_titles=lis_column_titles)
-
 	
 	print(str(int_total_line_num) + "\t lines read.")
-	print(str(len(dict_tuple_users_positions.keys())) + "\t lweets with geolocation data.")
+	print(str(len(dict_tuple_users_positions.keys())) + "\t tweets with geolocation data.")
 	print(str(int_corrupted_lines) + "\t corrupted lines in this dataset.")	
 
 	cleanup()	
