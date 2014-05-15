@@ -99,6 +99,7 @@ def cleanup():
 	shutil.move('users_by_date.csv', str_destination)
 	shutil.move('users_activity.csv', str_destination)
 	shutil.move('hashtags_network.csv', str_destination)
+	shutil.move('hashtags_network_without_accents.csv', str_destination)#Added 15/05/2014
 
 	shutil.move('tweets_with_links.csv', str_destination)
 	shutil.move('tweets_without_RTs.csv', str_destination)

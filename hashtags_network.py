@@ -7,7 +7,7 @@ It is an experimental feature.
 """
 import csv
 import itertools
-from lib_text import remove_invalid_characters, remove_punctuation
+from lib_text import remove_latin_accents, remove_punctuation
 from lib_output import DEFAULT_OUTPUT_DELIMITER
 
 GEPHI_DELIMITER=';'
@@ -34,6 +34,30 @@ def process_hashtags_relations(str_tweet_text):
 	for item in itertools.combinations(list_str_hashtags, 2):
 		list_hashtags_combinations.append([item[0], item[1]])	
 	return(list_hashtags_combinations)
+
+def get_hashtags_without_accents(str_text):
+	""" 
+	Returns all the hashtags in a given string. 
+	Hashtags are considered words that start with # and 
+	have a length bigger than 1, not considering the # character. 
+	"""
+	list_str_words = str_text.split()
+	list_str_hashtags = []
+	for word in list_str_words:
+		if word.startswith("#") and not(word.endswith("…")): #checks if the word wasn't truncated
+			temp_word = remove_punctuation(word.lower())
+			if temp_word is not None and len(temp_word) > 1:
+				list_str_hashtags.append("#" + remove_latin_accents(temp_word))
+	return list_str_hashtags
+
+def process_hashtags_relations_without_accents(str_tweet_text):
+	""" Returns all the tuples of combinations of hashtags in a tweet. """
+	list_str_hashtags = get_hashtags_without_accents(str_tweet_text)
+	list_hashtags_combinations = []
+	for item in itertools.combinations(list_str_hashtags, 2):
+		list_hashtags_combinations.append([item[0], item[1]])	
+	return(list_hashtags_combinations)
+
 
 def hashtags_relations_to_csv(list_tuple_hashtags, filename='hashtags_network.csv'):	
 	"""

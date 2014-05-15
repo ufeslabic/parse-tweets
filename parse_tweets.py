@@ -6,7 +6,7 @@ import sys
 from collections import defaultdict
 
 from hashtags_network import hashtags_relations_to_csv
-from hashtags_network import process_hashtags_relations
+from hashtags_network import process_hashtags_relations, process_hashtags_relations_without_accents
 from lib_file_fixing import file_fix
 from lib_input import DEFAULT_INPUT_DELIMITER, cleanup, load_filter_list
 from lib_input import options_parser
@@ -193,6 +193,7 @@ def main(input_file='tweets_FIXED_NO_DUPLICATES.csv'):
 	# List with hashtags relations tuples
 	# entry example: (#salt, #pepper)
 	list_tuple_hashtags_relations = []
+	list_tuple_hashtags_relations_without_accents =[]
 
 	# counter for the number of incorrect timestamps in a dataset
 	int_incorrect_timestamps = 0
@@ -248,6 +249,8 @@ def main(input_file='tweets_FIXED_NO_DUPLICATES.csv'):
 									
 									# Append the relations between the hashtags found in the tweet to a list
 									list_tuple_hashtags_relations += process_hashtags_relations(tweet_text)
+									list_tuple_hashtags_relations_without_accents += process_hashtags_relations_without_accents(tweet_text)
+
 									if timestamp:
 										str_date = datetime.datetime.fromtimestamp(int(timestamp)).strftime('%d/%m/%Y') # date STRING in the format DD/MM/YYYY
 										count_users_by_date(dict_int_users_by_date, str_date, str_username)
@@ -288,6 +291,7 @@ def main(input_file='tweets_FIXED_NO_DUPLICATES.csv'):
 	locations_to_csv(dict_tuple_users_positions)
 	
 	hashtags_relations_to_csv(list_tuple_hashtags_relations)
+	hashtags_relations_to_csv(list_tuple_hashtags_relations_without_accents, 'hashtags_network_without_accents.csv')
 	
 	top_something_to_csv(dict_set_urls, 'top_urls.csv', ['url', 'distinct_users'], 
 		reverse=True, 
