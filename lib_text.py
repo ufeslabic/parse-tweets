@@ -105,7 +105,7 @@ def is_hashtag(str_s):
     A hashtag is considered as string that starts with the "#"
     character.
     """
-    if str_s.startswith("#"):
+    if str_s.startswith("#") and not(str_s.endswith("…")):
         return True
     else:
         return False
@@ -116,7 +116,7 @@ def is_twitter_mention(str_s):
     A twitter mention is considered a string that startws with the "@"
     character.
     """
-    if str_s.startswith("@") or str_s.startswith("＠"):
+    if (str_s.startswith("@") or str_s.startswith("＠")) and not(str_s.endswith("…")) :
         return True
     else:
         return False
@@ -124,7 +124,7 @@ def is_twitter_mention(str_s):
 def is_URL(str_s):
     """ 
     Returns True if str_string is an URL or False if not. """
-    if str_s.startswith("ht") or str_s.startswith('hr'):
+    if (str_s.startswith("ht") or str_s.startswith('hr')) and not(str_s.endswith("…")):
         return True
     else:
         return False
