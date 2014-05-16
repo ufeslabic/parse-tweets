@@ -12,14 +12,14 @@
     for end users.
 """
 import string
-from customized_stopwords import portuguese_common_words
+from customized_stopwords import portuguese_common_words, english_common_words, spanish_common_words
 
 """ 
 This list is defined in it's own file in order to make modifications 
 easier for non-programmers.
 Check python ntlk for better stopwords in your language.
 """
-CUSTOMIZED_STOPWORDS = set(portuguese_common_words)
+CUSTOMIZED_STOPWORDS = set(portuguese_common_words+ spanish_common_words + english_common_words)
 
 VALID_CHARACTERS = string.ascii_letters + string.digits
 EXTRA_CHARACTERS = "_-"
@@ -32,6 +32,8 @@ for character in VALID_CHARACTERS:
 
 ACCENT_REPLACEMENTS = {
     ord('á'):'a',
+    ord('ã'):'a',
+    ord('â'):'a',
     ord('à'):'a',
     ord('è'):'e',
     ord('ê'):'e',
