@@ -133,7 +133,7 @@ def main(input_file='tweets_FIXED_NO_DUPLICATES.csv'):
 	Input file is set to 'tweets_FIXED' because it is the output of remove_null_byte()
 	"""
 	file_fix('tweets.csv')
-	set_cluster_usernames = set(load_filter_list('cluster_usernames.csv'))
+	set_cluster_usernames = set(load_filter_list('cluster_usernames.csv'))	
 	try:
 		str_target_hashtag = load_filter_list('specific_hashtags.csv')[0]
 	except IndexError:
@@ -224,7 +224,7 @@ def main(input_file='tweets_FIXED_NO_DUPLICATES.csv'):
 					if len(line) is 13:
 						str_username = line[2]
 						str_username = str_username.lower()
-						if (not set_cluster_usernames) or (str_username in list_cluster_usernames):
+						if (not set_cluster_usernames) or (str_username in set_cluster_usernames):
 							#saving the tweet if it has a link
 							if has_links(line[0]):
 								set_tup_str_tweets_with_links.add(tuple(line))
