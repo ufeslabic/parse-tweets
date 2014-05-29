@@ -61,6 +61,27 @@ def load_filter_list(filename):
 	else:		
 		return filter_strings
 
+def load_user_relations(filename):
+	""" 
+	Reads a user_relations.csv file if present and returns a 
+	dictionary of usernames and tuples in the format(followers_count, friends_count). If no username is in the file, 
+	or the file is not present, it returns an empty dictionary.
+	"""
+	user_relations = {}
+	try:
+		with open(filename, 'rt', encoding="utf8") as csvfile:
+			csv_in = csv.reader(csvfile, delimiter='|', quotechar='"')
+			next(csv_in)
+			for line in csv_in:
+				username = line[0]
+				followers_count = line[1]
+				friends_count = line[2]
+				user_relations[username] = (followers_count, friends_count)
+	except:
+		user_relations = {}
+	return user_relations
+	
+
 def remove_null_byte():
 	"""
 	Calls a bash script to rewrite the tweets.csv file renaming it 

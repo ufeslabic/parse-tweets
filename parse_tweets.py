@@ -8,13 +8,13 @@ from collections import defaultdict
 from hashtags_network import hashtags_relations_to_csv
 from hashtags_network import process_hashtags_relations, process_hashtags_relations_without_accents
 from lib_file_fixing import file_fix
-from lib_input import DEFAULT_INPUT_DELIMITER, cleanup, load_filter_list
+from lib_input import DEFAULT_INPUT_DELIMITER, cleanup, load_filter_list, load_user_relations
 from lib_input import options_parser
-from lib_output import top_something_to_csv, locations_to_csv
+from lib_output import top_something_to_csv, locations_to_csv, top_something_to_csv_with_relations
 from lib_output import dict_to_txt_for_wordle, locations_to_csv, write_set_of_tuples
 from lib_text import remove_invalid_characters, is_stopword, is_hashtag, is_URL
 from lib_text import is_twitter_mention, is_valid_twitter_short_url, remove_latin_accents
-from lib_text import remove_punctuation, has_links, is_the_only_hashtag_in_text, remove_latin_accents
+from lib_text import remove_punctuation, remove_punctuation_special, has_links, is_the_only_hashtag_in_text, remove_latin_accents
 
 from lib_time import *
 
@@ -63,7 +63,7 @@ def handle_mentions(str_mentioned_username, dict_set_mentions, str_username_that
 	users that mentioned the key profile.
 	"""
 	str_mentioned_username = str_mentioned_username.lower()
-	str_mentioned_username = remove_punctuation(str_mentioned_username)
+	str_mentioned_username = remove_punctuation_special(str_mentioned_username)
 	if str_mentioned_username is not '':
 		#str_mentioned_username = str_mentioned_username.lower()
 		try:
@@ -133,6 +133,11 @@ def main(input_file='tweets_FIXED_NO_DUPLICATES.csv'):
 	Input file is set to 'tweets_FIXED' because it is the output of remove_null_byte()
 	"""
 	file_fix('tweets.csv')
+	dict_users_relations = load_user_relations('user_relations.csv')
+	if(dict_users_relations == {}):
+		user_relations_file_found = False
+	else:
+		user_relations_file_found = True
 	set_cluster_usernames = set(load_filter_list('cluster_usernames.csv'))	
 	try:
 		str_target_hashtag = load_filter_list('specific_hashtags.csv')[0]
@@ -317,16 +322,22 @@ def main(input_file='tweets_FIXED_NO_DUPLICATES.csv'):
 		sort_key_function=lambda t: t[1], 
 		value_format_function=lambda t:t)
 	
-	top_something_to_csv(dict_int_mentions, 'mentions.csv', ['mentions', 'distinct_users_mentioning'], 
-		reverse=True, 
-		sort_key_function=lambda t: t[1], 
-		value_format_function=lambda t:t)	
-	
-	top_something_to_csv(dict_int_users_activity, 'users_activity.csv', ['user', 'total_tweets'], 
-		reverse=True, 
-		sort_key_function=lambda t: t[1], 
-		value_format_function=lambda t:t)
-	
+	if(user_relations_file_found):
+		top_something_to_csv_with_relations('mentions.csv', dict_int_mentions, dict_users_relations, 
+			['username', 'distinct_users_mentioning', 'followers', 'friends_count'])
+		top_something_to_csv_with_relations('users_activity.csv', dict_int_users_activity, dict_users_relations, 
+			['username', 'total_tweets', 'followers', 'friends_count'])
+	else:
+		top_something_to_csv(dict_int_mentions, 'mentions.csv', ['mentions', 'distinct_users_mentioning'], 
+			reverse=True, 
+			sort_key_function=lambda t: t[1], 
+			value_format_function=lambda t:t)	
+		
+		top_something_to_csv(dict_int_users_activity, 'users_activity.csv', ['user', 'total_tweets'], 
+			reverse=True, 
+			sort_key_function=lambda t: t[1], 
+			value_format_function=lambda t:t)	
+
 	top_something_to_csv(tweets_count, 'top_tweets.csv', ['tweet', 'times_tweeted'], 
 		reverse=True, 
 		sort_key_function=lambda t: t[1], 
