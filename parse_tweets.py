@@ -238,7 +238,7 @@ def main(input_file='tweets_FIXED_NO_DUPLICATES.csv'):
 							if (not str_target_hashtag) or (is_the_only_hashtag_in_text(str_target_hashtag, tweet_text)):
 
 								#saving the tweet if it as RT
-								if not tweet_text.startswith("RT"):
+								if not tweet_text.replace('"', '').startswith("RT"):
 									set_tup_without_RT_tweets.add(tuple(line))
 
 								# Set of tweets with only the specified hashtag
