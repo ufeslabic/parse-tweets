@@ -53,7 +53,7 @@ def load_filter_list(filename):
 			csv_in = csv.reader(csvfile, delimiter='|', quotechar='"')
 			next(csv_in)
 			for line in csv_in:
-				filter_strings.append(line[0])
+				filter_strings.append(line[0].lower())
 	except :
 		filter_strings = {}
 	if len(filter_strings) == 0:
