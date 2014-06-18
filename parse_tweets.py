@@ -15,6 +15,7 @@ from lib_output import dict_to_txt_for_wordle, locations_to_csv, write_set_of_tu
 from lib_text import remove_invalid_characters, is_stopword, is_hashtag, is_URL
 from lib_text import is_twitter_mention, is_valid_twitter_short_url, remove_latin_accents
 from lib_text import remove_punctuation, remove_punctuation_special, has_links, is_the_only_hashtag_in_text, remove_latin_accents
+from lib_dataset_filter import file_filter
 
 from lib_time import *
 
@@ -133,12 +134,13 @@ def main(input_file='tweets_FIXED_NO_DUPLICATES.csv'):
 	Input file is set to 'tweets_FIXED' because it is the output of remove_null_byte()
 	"""
 	file_fix('tweets.csv')
+	file_filter()
 	dict_users_relations = load_user_relations('user_relations.csv')
 	if(dict_users_relations == {}):
 		user_relations_file_found = False
 	else:
 		user_relations_file_found = True
-	set_cluster_usernames = set(load_filter_list('cluster_usernames.csv'))	
+	set_cluster_usernames = set(load_filter_list('cluster_usernames.csv'))
 	try:
 		str_target_hashtag = load_filter_list('specific_hashtags.csv')[0]
 	except IndexError:
@@ -214,9 +216,6 @@ def main(input_file='tweets_FIXED_NO_DUPLICATES.csv'):
 	# Set of tweets that have links
 	set_tup_str_tweets_with_links = set()
 
-	# Set of tweets that aren't RT's
-	set_tup_without_RT_tweets = set()
-
 	# Set of tweets with only the specified hashtag
 	set_tup_tweets_specific_hashtag = set()
 	
@@ -236,10 +235,6 @@ def main(input_file='tweets_FIXED_NO_DUPLICATES.csv'):
 
 							tweet_text = line[0]
 							if (not str_target_hashtag) or (is_the_only_hashtag_in_text(str_target_hashtag, tweet_text)):
-
-								#saving the tweet if it as RT
-								if not tweet_text.replace('"', '').startswith("RT"):
-									set_tup_without_RT_tweets.add(tuple(line))
 
 								# Set of tweets with only the specified hashtag
 								if (str_target_hashtag):
@@ -358,9 +353,6 @@ def main(input_file='tweets_FIXED_NO_DUPLICATES.csv'):
 
 	# Writing tweets that have links
 	write_set_of_tuples(set_tup_str_tweets_with_links, 'tweets_with_links.csv', column_titles=lis_column_titles)
-
-	# Writing tweets that have links
-	write_set_of_tuples(set_tup_without_RT_tweets, 'tweets_without_RTs.csv', column_titles=lis_column_titles)
 
 	# Writing tweets that have links
 	write_set_of_tuples(set_tup_tweets_specific_hashtag, 'tweets_of_a_specific_hashtag.csv', column_titles=lis_column_titles)
