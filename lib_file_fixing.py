@@ -56,7 +56,7 @@ def remove_duplicate_lines(str_input_filename='tweets_FIXED.csv'):
         # Adding all the lines in the set.
         for line in csv_in:
             if len(line) is 13:
-                int_total_valid_lines += 1
+                int_total_valid_lines += 1                
                 set_tuple_valid_lines.add(tuple(line))
     int_total_lines = csv_in.line_num
     int_total_valid_lines_non_duplicate = len(set_tuple_valid_lines) + 1 #to account for the column titles
@@ -70,7 +70,9 @@ def remove_duplicate_lines(str_input_filename='tweets_FIXED.csv'):
         file_writer = csv.writer(csvfile, delimiter=DEFAULT_OUTPUT_DELIMITER, quotechar='"')
         file_writer.writerow(list_str_first_line)
         for line in set_tuple_valid_lines:
-            file_writer.writerow(line)
+            line2 = list(line)
+            line2 = line2[0].replace("\n", " ").replace("\r","").replace("|","")            
+            file_writer.writerow(line)    
 
 def file_fix(str_input_filename):
     """ This function removes null_byte and duplicate tweets. """
