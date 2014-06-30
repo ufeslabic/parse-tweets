@@ -22,15 +22,15 @@ def filter_dataset(str_input_filename, set_media_usernames):
             # Adding all the lines in the set.
             for line in csv_in:
                 if len(line) is 13:
-                temp_username = line[2].lower()
-                #if the username is in the media usernames list
-                if(temp_username in set_media_usernames):
-                    set_tuple_valid_lines.add(tuple(line))
-                else:                    
-                    str_tweet_text = line[0].lower()
-                    #if the username is NOT in the media usernames list, check if it occurs in the tweet text
-                    if(is_username_in_tweet_text(str_tweet_text, str_username)):
+                    temp_username = line[2].lower()
+                    #if the username is in the media usernames list
+                    if(temp_username in set_media_usernames):
                         set_tuple_valid_lines.add(tuple(line))
+                    else:                    
+                        str_tweet_text = line[0].lower()
+                        #if the username is NOT in the media usernames list, check if it occurs in the tweet text
+                        if(is_username_in_tweet_text(str_tweet_text, str_username)):
+                            set_tuple_valid_lines.add(tuple(line))
     
     # Writing all the exclusive lines
     with open("tweets_filtered.csv", 'w', newline='', encoding="utf8") as csvfile:
