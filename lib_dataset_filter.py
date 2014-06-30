@@ -21,7 +21,8 @@ def filter_dataset(str_input_filename, set_media_usernames):
 
             # Adding all the lines in the set.
             for line in csv_in:
-                temp_username = line[2].lower()                
+                if len(line) is 13:
+                temp_username = line[2].lower()
                 #if the username is in the media usernames list
                 if(temp_username in set_media_usernames):
                     set_tuple_valid_lines.add(tuple(line))
@@ -29,7 +30,7 @@ def filter_dataset(str_input_filename, set_media_usernames):
                     str_tweet_text = line[0].lower()
                     #if the username is NOT in the media usernames list, check if it occurs in the tweet text
                     if(is_username_in_tweet_text(str_tweet_text, str_username)):
-                        set_tuple_valid_lines.add(tuple(line))                
+                        set_tuple_valid_lines.add(tuple(line))
     
     # Writing all the exclusive lines
     with open("tweets_filtered.csv", 'w', newline='', encoding="utf8") as csvfile:
@@ -48,9 +49,10 @@ def filter_tweets_without_RT(str_input_filename):
 
         # Adding all the lines in the set.
         for line in csv_in:
-            str_tweet_text = line[0].lower()
-            if("rt @" not in str_tweet_text):                
-                set_tuple_valid_lines.add(tuple(line))                
+            if len(line) is 13:
+                str_tweet_text = line[0].lower()
+                if("rt @" not in str_tweet_text):
+                    set_tuple_valid_lines.add(tuple(line))
     
     # Writing all the exclusive lines
     with open("tweets_without_RTs.csv", 'w', newline='', encoding="utf8") as csvfile:
