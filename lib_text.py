@@ -163,6 +163,12 @@ def has_links(str):
             return True
     return False
 
+def contains_hashtags(str_tweet_text):
+    if("#" in str_tweet_text):
+        return True
+    else:
+        return False
+
 def is_the_only_hashtag_in_text(str_hashtag, str_text_to_search):
     lis_str_hashtags = []
     str_words_in_tweet = str_text_to_search.split()
