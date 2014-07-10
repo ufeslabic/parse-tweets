@@ -15,6 +15,7 @@ from lib_output import dict_to_txt_for_wordle, locations_to_csv, write_set_of_tu
 from lib_text import remove_invalid_characters, is_stopword, is_hashtag, is_URL
 from lib_text import is_twitter_mention, is_valid_twitter_short_url, remove_latin_accents
 from lib_text import remove_punctuation, remove_punctuation_special, has_links, is_the_only_hashtag_in_text, remove_latin_accents
+from lib_text import contains_hashtags
 from lib_dataset_filter import file_filter
 
 from lib_time import *
@@ -218,6 +219,9 @@ def main(input_file='tweets_FIXED_NO_DUPLICATES.csv'):
 
 	# Set of tweets with only the specified hashtag
 	set_tup_tweets_specific_hashtag = set()
+
+	# Set of tweets that doesn't have hashtags
+	set_tup_str_tweets_without_hashtags = set()
 	
 	with open(input_file, 'rt', encoding="utf8") as csvfile:
 		try:
@@ -229,12 +233,15 @@ def main(input_file='tweets_FIXED_NO_DUPLICATES.csv'):
 						str_username = line[2]
 						str_username = str_username.lower()
 						if (not set_cluster_usernames) or (str_username in set_cluster_usernames):
-							#saving the tweet if it has a link
-							if has_links(line[0]):
-								set_tup_str_tweets_with_links.add(tuple(line))
 
 							tweet_text = line[0]
 							if (not str_target_hashtag) or (is_the_only_hashtag_in_text(str_target_hashtag, tweet_text)):
+															#saving the tweet if it has a link
+								if has_links(line[0]):
+									set_tup_str_tweets_with_links.add(tuple(line))
+
+								if not contains_hashtags(line[0]):
+									set_tup_str_tweets_without_hashtags.add(tuple(line))
 
 								# Set of tweets with only the specified hashtag
 								if (str_target_hashtag):
@@ -356,6 +363,10 @@ def main(input_file='tweets_FIXED_NO_DUPLICATES.csv'):
 
 	# Writing tweets that have links
 	write_set_of_tuples(set_tup_tweets_specific_hashtag, 'tweets_of_a_specific_hashtag.csv', column_titles=lis_column_titles)
+
+	# Writing tweets that have links
+	write_set_of_tuples(set_tup_str_tweets_without_hashtags, 'tweets_without_hashtags.csv', column_titles=lis_column_titles)
+
 	
 	print(str(int_total_line_num) + "\t lines read.")
 	print(str(len(dict_tuple_users_positions.keys())) + "\t tweets with geolocation data.")
