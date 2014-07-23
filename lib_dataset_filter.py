@@ -47,7 +47,9 @@ def filter_dataset(str_input_filename, set_media_usernames):
         for line in set_tuple_lines_without_media:
             file_writer.writerow(line)
 
-    print("tweets_filtered.csv File was created.")
+    print("tweets_filtered.csv and tweets_filtered_no_media.csv files were created.")
+    print(str(len(set_tuple_lines_without_media)) + "\t tweets are not from or don't mention the specified media profiles.")
+
 
 def filter_tweets_without_RT(str_input_filename):
     set_tuple_filtered_lines = set()
