@@ -126,9 +126,13 @@ def cleanup():
 	shutil.move('tweets_without_RTs.csv', str_destination)
 	shutil.move('tweets_of_a_specific_hashtag.csv', str_destination)
 	shutil.move('tweets_without_hashtags.csv', str_destination)
+
+	shutil.move('user_influence.csv', str_destination)
 	
 	try:	
 		shutil.move('words_per_period.csv', str_destination)
+		shutil.move('tweets_filtered_media.csv', str_destination)
+		shutil.move('tweets_filtered_no_media.csv', str_destination)
 	except FileNotFoundError:
 		pass
 
