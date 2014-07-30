@@ -18,7 +18,7 @@ from lib_text import remove_punctuation, remove_punctuation_special, has_links, 
 from lib_text import contains_hashtags
 from lib_dataset_filter import file_filter
 
-from lib_time import *
+from lib_time import * 
 
 def dict_of_int_from_dict_of_lists(dict_of_lists):
 	"""
@@ -194,6 +194,10 @@ def main(input_file='tweets_FIXED_NO_DUPLICATES.csv'):
 	# entry example: 'ronald0' => 11
 	dict_int_users_activity = defaultdict(int)
 
+	# Dictionary with the relation user_tweets/user_mention
+	# entry example: 'ronald0' => 11
+	dict_int_user_influence = {}
+
 	# Dictionary with the tweet texts. 
 	# entry example: 'a nice tweet example #creativity' => 11
 	tweets_count = defaultdict(int)
@@ -340,15 +344,31 @@ def main(input_file='tweets_FIXED_NO_DUPLICATES.csv'):
 			sort_key_function=lambda t: t[1], 
 			value_format_function=lambda t:t)	
 
+
 	top_something_to_csv(tweets_count, 'top_tweets.csv', ['tweet', 'times_tweeted'], 
-		reverse=True, 
+		reverse=True,
 		sort_key_function=lambda t: t[1], 
 		value_format_function=lambda t:t)
 	
 	top_something_to_csv(dict_int_words, 'top_words.csv', ['word', 'times_mentioned'], 
-		reverse=True, 
-		sort_key_function=lambda t: t[1], 
+		reverse=True,
+		sort_key_function=lambda t: t[1],
 		value_format_function=lambda t:t)
+
+
+	#Calculating the user influence metric(mentions/number_of_tweets_by_this_user)	
+	for username, num_of_tweets in dict_int_users_activity.items():
+		try:
+			dict_int_user_influence[username] = dict_int_mentions[username]/dict_int_users_activity[username]
+		except ZeroDivisionError:
+			pass
+			
+	# Writing the user influence CSV.
+	top_something_to_csv(dict_int_user_influence, 'user_influence.csv', ['word', 'influence(mentions/number_of_tweets_by_this_user)'], 
+		reverse=True,
+		sort_key_function=lambda t: t[1],
+		value_format_function=lambda t:t)
+
 
 	# Writing the TXT's files of the wordclouds.
 	dict_to_txt_for_wordle(dict_int_words, 'top_words_wordle.txt', sort_key=lambda t:t[1])
